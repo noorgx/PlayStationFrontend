@@ -1,6 +1,6 @@
-// src/components/Quotes.js
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Form, Table, InputGroup, FormControl, Card, Pagination, Container, Row, Col } from 'react-bootstrap';
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaDollarSign, FaFileInvoiceDollar } from 'react-icons/fa';
 import axios from 'axios';
 
 const Quotes = () => {
@@ -186,199 +186,212 @@ const Quotes = () => {
     }, []);
 
     return (
-        <Container fluid className="my-4">
-            <Row className="mb-3">
-                <Col>
-                    <h2>Quotes</h2>
-                </Col>
-                <Col className="text-end">
-                    <Button variant="primary" onClick={() => setShowModal(true)}>
-                        Add Quote
-                    </Button>
-                </Col>
-            </Row>
-
-            {/* Search and Filter Inputs */}
-            <Row className="mb-3">
-                <Col md={12}>
-                    <InputGroup className="mb-3">
-                        <FormControl
-                            placeholder="Search by quote details..."
-                            value={searchTerm}
-                            onChange={handleSearchChange}
-                        />
-                        <FormControl
-                            type="date"
-                            placeholder="Start Date"
-                            value={filterStartDate}
-                            onChange={handleStartDateFilterChange}
-                        />
-                        <FormControl
-                            type="date"
-                            placeholder="End Date"
-                            value={filterEndDate}
-                            onChange={handleEndDateFilterChange}
-                        />
-                        <Form.Select
-                            value={filterMonth}
-                            onChange={handleMonthFilterChange}
-                        >
-                            <option value="">Filter by Month</option>
-                            {Array.from({ length: 12 }, (_, i) => (
-                                <option key={i + 1} value={i + 1}>
-                                    {new Date(0, i).toLocaleString('default', { month: 'long' })}
-                                </option>
-                            ))}
-                        </Form.Select>
-                        <Form.Select
-                            value={filterYear}
-                            onChange={handleYearFilterChange}
-                        >
-                            <option value="">Filter by Year</option>
-                            {Array.from({ length: 10 }, (_, i) => {
-                                const year = new Date().getFullYear() - i;
-                                return <option key={year} value={year}>{year}</option>;
-                            })}
-                        </Form.Select>
-                    </InputGroup>
-                </Col>
-            </Row>
-
-            {/* Quotes Table */}
-            <Row>
-                <Col md={12}>
-                    <div className="table-responsive">
-                        <Table striped bordered hover>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Quote Details</th>
-                                    <th>Cost ($)</th>
-                                    <th>Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {currentQuotes.map((quote, index) => (
-                                    <tr key={quote.id}>
-                                        <td>{indexOfFirstItem + index + 1}</td>
-                                        <td>
-                                            {quote.quote_details.length > 50
-                                                ? `${quote.quote_details.substring(0, 50)}...`
-                                                : quote.quote_details}
-                                            <Button
-                                                variant="link"
-                                                size="sm"
-                                                onClick={() => handleShowDetails(quote.quote_details)}
-                                            >
-                                                Show Details
-                                            </Button>
-                                        </td>
-                                        <td>${quote.cost}</td>
-                                        <td>{quote.date}</td>
-                                        <td>
-                                            <Button variant="warning" size="sm" onClick={() => handleEdit(quote)} className="me-2">
-                                                Edit
-                                            </Button>
-                                            <Button variant="danger" size="sm" onClick={() => handleDelete(quote.id)}>
-                                                Delete
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colSpan="2" className="text-end"><strong>Total Cost:</strong></td>
-                                    <td><strong>${totalCost.toFixed(2)}</strong></td>
-                                    <td colSpan="2"></td>
-                                </tr>
-                            </tfoot>
-                        </Table>
-                    </div>
-                </Col>
-            </Row>
-
-            {/* Pagination */}
-            <Row>
-                <Col md={12} className="d-flex justify-content-center">
-                    <Pagination>
-                        {Array.from({ length: Math.ceil(filteredQuotes.length / itemsPerPage) }, (_, i) => (
-                            <Pagination.Item
-                                key={i + 1}
-                                active={i + 1 === currentPage}
-                                onClick={() => paginate(i + 1)}
-                            >
-                                {i + 1}
-                            </Pagination.Item>
-                        ))}
-                    </Pagination>
-                </Col>
-            </Row>
-
-            {/* Add/Edit Quote Modal */}
-            <Modal show={showModal} onHide={resetForm} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>{editMode ? 'Edit Quote' : 'Add Quote'}</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form onSubmit={handleSubmit}>
-                        <Form.Group controlId="quoteDetails" className="mb-3">
-                            <Form.Label>Quote Details</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="quote_details"
-                                value={currentQuote.quote_details}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group controlId="cost" className="mb-3">
-                            <Form.Label>Cost</Form.Label>
-                            <Form.Control
-                                type="number"
-                                name="cost"
-                                value={currentQuote.cost}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group controlId="date" className="mb-3">
-                            <Form.Label>Date</Form.Label>
-                            <Form.Control
-                                type="date"
-                                name="date"
-                                value={currentQuote.date}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Button variant="primary" type="submit">
-                            {editMode ? 'Update' : 'Add'}
+        <div dir="rtl">
+            <Container fluid className="my-4">
+                <Row className="mb-3">
+                    <Col>
+                        <h2><FaFileInvoiceDollar className="me-2" /> الفواتير</h2>
+                    </Col>
+                    <Col className="text-end">
+                        <Button variant="primary" onClick={() => setShowModal(true)}>
+                            <FaPlus className="me-2" /> إضافة فاتورة
                         </Button>
-                    </Form>
-                </Modal.Body>
-            </Modal>
+                    </Col>
+                </Row>
 
-            {/* Show Details Modal */}
-            <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Quote Details</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Card>
-                        <Card.Body>
-                            <pre style={{ whiteSpace: 'pre-wrap' }}>{selectedQuoteDetails}</pre>
-                        </Card.Body>
-                    </Card>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
-                        Close
-                    </Button>
-                </Modal.Footer>
-            </Modal>
-        </Container>
+                {/* Search and Filter Inputs */}
+                <Row className="mb-3">
+                    <Col md={12}>
+                        <InputGroup className="mb-3">
+                            <InputGroup.Text><FaSearch /></InputGroup.Text>
+                            <FormControl
+                                placeholder="بحث حسب التفاصيل..."
+                                value={searchTerm}
+                                onChange={handleSearchChange}
+                            />
+                            <InputGroup.Text><FaCalendarAlt /></InputGroup.Text>
+                            <FormControl
+                                type="date"
+                                placeholder="تاريخ البداية"
+                                value={filterStartDate}
+                                onChange={handleStartDateFilterChange}
+                            />
+                            <InputGroup.Text><FaCalendarAlt /></InputGroup.Text>
+                            <FormControl
+                                type="date"
+                                placeholder="تاريخ النهاية"
+                                value={filterEndDate}
+                                onChange={handleEndDateFilterChange}
+                            />
+                            <Form.Select
+                                value={filterMonth}
+                                onChange={handleMonthFilterChange}
+                            >
+                                <option value="">الشهر</option>
+                                {Array.from({ length: 12 }, (_, i) => (
+                                    <option key={i + 1} value={i + 1}>
+                                        {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                                    </option>
+                                ))}
+                            </Form.Select>
+                            <Form.Select
+                                value={filterYear}
+                                onChange={handleYearFilterChange}
+                            >
+                                <option value="">السنة</option>
+                                {Array.from({ length: 10 }, (_, i) => {
+                                    const year = new Date().getFullYear() - i;
+                                    return <option key={year} value={year}>{year}</option>;
+                                })}
+                            </Form.Select>
+                        </InputGroup>
+                    </Col>
+                </Row>
+
+                {/* Quotes Table */}
+                <Row>
+                    <Col md={12}>
+                        <div className="table-responsive">
+                            <Table striped bordered hover>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>تفاصيل الفاتورة</th>
+                                        <th>التكلفة ($)</th>
+                                        <th>التاريخ</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {currentQuotes.map((quote, index) => (
+                                        <tr key={quote.id}>
+                                            <td>{indexOfFirstItem + index + 1}</td>
+                                            <td>
+                                                {quote.quote_details.length > 50
+                                                    ? `${quote.quote_details.substring(0, 50)}...`
+                                                    : quote.quote_details}
+                                                <Button
+                                                    variant="link"
+                                                    size="sm"
+                                                    onClick={() => handleShowDetails(quote.quote_details)}
+                                                >
+                                                    عرض التفاصيل
+                                                </Button>
+                                            </td>
+                                            <td>{quote.cost}</td>
+                                            <td>{quote.date}</td>
+                                            <td>
+                                                <Button variant="warning" size="sm" onClick={() => handleEdit(quote)} className="me-2">
+                                                    <FaEdit /> تعديل
+                                                </Button>
+                                                <Button variant="danger" size="sm" onClick={() => handleDelete(quote.id)}>
+                                                    <FaTrash /> حذف
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colSpan="2" className="text-end"><strong>إجمالي التكلفة:</strong></td>
+                                        <td><strong>{totalCost.toFixed(2)}</strong></td>
+                                        <td colSpan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </Table>
+                        </div>
+                    </Col>
+                </Row>
+
+                {/* Pagination */}
+                <Row>
+                    <Col md={12} className="d-flex justify-content-center">
+                        <Pagination>
+                            {Array.from({ length: Math.ceil(filteredQuotes.length / itemsPerPage) }, (_, i) => (
+                                <Pagination.Item
+                                    key={i + 1}
+                                    active={i + 1 === currentPage}
+                                    onClick={() => paginate(i + 1)}
+                                >
+                                    {i + 1}
+                                </Pagination.Item>
+                            ))}
+                        </Pagination>
+                    </Col>
+                </Row>
+                <div dir="rtl">
+                    {/* Add/Edit Quote Modal */}
+                    <Modal show={showModal} onHide={resetForm} centered>
+                        <Modal.Header closeButton>
+                            <Modal.Title>{editMode ? 'تعديل الفاتورة' : 'إضافة فاتورة'}</Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body>
+                            <Form onSubmit={handleSubmit}>
+                                <Form.Group controlId="quoteDetails" className="mb-3">
+                                    <Form.Label>تفاصيل الفاتورة</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        name="quote_details"
+                                        value={currentQuote.quote_details}
+                                        onChange={handleInputChange}
+                                        required
+                                    />
+                                </Form.Group>
+                                <Form.Group controlId="cost" className="mb-3">
+                                    <Form.Label>التكلفة</Form.Label>
+                                    <InputGroup>
+                                        <InputGroup.Text><FaDollarSign /></InputGroup.Text>
+                                        <Form.Control
+                                            type="number"
+                                            name="cost"
+                                            value={currentQuote.cost}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    </InputGroup>
+                                </Form.Group>
+                                <Form.Group controlId="date" className="mb-3">
+                                    <Form.Label>التاريخ</Form.Label>
+                                    <InputGroup>
+                                        <InputGroup.Text><FaCalendarAlt /></InputGroup.Text>
+                                        <Form.Control
+                                            type="date"
+                                            name="date"
+                                            value={currentQuote.date}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    </InputGroup>
+                                </Form.Group>
+                                <Button variant="primary" type="submit">
+                                    {editMode ? 'تحديث' : 'إضافة'}
+                                </Button>
+                            </Form>
+                        </Modal.Body>
+                    </Modal>
+                </div>
+                <div dir="rtl">
+                    {/* Show Details Modal */}
+                    <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} centered>
+                        <Modal.Header closeButton>
+                            <Modal.Title>تفاصيل الفاتورة</Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body>
+                            <Card>
+                                <Card.Body>
+                                    <pre style={{ whiteSpace: 'pre-wrap' }}>{selectedQuoteDetails}</pre>
+                                </Card.Body>
+                            </Card>
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
+                                إغلاق
+                            </Button>
+                        </Modal.Footer>
+                    </Modal>
+                </div>
+            </Container>
+        </div>
     );
 };
 

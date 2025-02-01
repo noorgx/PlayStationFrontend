@@ -4,12 +4,13 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import CustomNavbar from './components/Navbar';
 import Machines from './components/Machines';
 import FoodDrinks from './components/FoodDrinks';
-import Customers from './components/Customers';
 import Quotes from './components/Quotes';
 import StorageAndQuotes from './components/StorageAndQuotes';
 import Register from './components/Register';
 import Login from './components/Login';
 import AdminPanel from './components/AdminPanel';
+import Rooms from './components/Rooms';
+import Calc from './components/Calc';
 import Logout from './components/Logout';
 import './App.css';
 
@@ -48,7 +49,7 @@ function App() {
   // Redirect if user is already logged in
   const AuthRoute = ({ element }) => {
     if (user) {
-      return <Navigate to="/" />;
+      return <Navigate to="/rooms" />;
     } else {
       return element;
     }
@@ -60,7 +61,15 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={<ProtectedRoute element={<Customers />} />}
+          element={<ProtectedRoute element={<Rooms />} />}
+        />
+        <Route
+          path="/calc"
+          element={<ProtectedRoute element={<Calc />} />}
+        />
+        <Route
+          path="/rooms"
+          element={<ProtectedRoute element={<Rooms />} />}
         />
         <Route
           path="/machines"
@@ -69,10 +78,6 @@ function App() {
         <Route
           path="/food-drinks"
           element={<ProtectedRoute element={<FoodDrinks />} />}
-        />
-        <Route
-          path="/customers"
-          element={<ProtectedRoute element={<Customers />} />}
         />
         <Route
           path="/quotes"

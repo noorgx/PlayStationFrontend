@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Form, Table, InputGroup, FormControl, Card, Pagination, Container, Row, Col } from 'react-bootstrap';
+import {
+  Button,
+  Modal,
+  Form,
+  Table,
+  InputGroup,
+  FormControl,
+  Card,
+  Pagination,
+  Container,
+  Row,
+  Col,
+} from 'react-bootstrap';
 import axios from 'axios';
+import { FaPlus, FaEdit, FaTrashAlt } from 'react-icons/fa'; // Icons from react-icons
 
 const StorageAndQuotes = () => {
   const [storageItems, setStorageItems] = useState([]);
@@ -29,8 +42,12 @@ const StorageAndQuotes = () => {
   // Fetch all storage items and quotes
   const fetchStorageAndQuotes = async () => {
     try {
-      const storageResponse = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/storage');
-      const quotesResponse = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/quotes');
+      const storageResponse = await axios.get(
+        'https://playstationbackend.netlify.app/.netlify/functions/server/storage'
+      );
+      const quotesResponse = await axios.get(
+        'https://playstationbackend.netlify.app/.netlify/functions/server/quotes'
+      );
       setStorageItems(storageResponse.data);
       setQuotes(quotesResponse.data);
       setFilteredQuotes(quotesResponse.data); // Initialize filtered quotes
@@ -55,32 +72,38 @@ const StorageAndQuotes = () => {
       const { item_name, quantity, price, createQuote } = currentItem;
 
       if (!item_name || !quantity || !price) {
-        alert('Item name, quantity, and price are required!');
+        alert('اسم العنصر، الكمية، والسعر مطلوبة!');
         return;
       }
 
       if (editMode) {
         // Update storage item
-        await axios.put(`https://playstationbackend.netlify.app/.netlify/functions/server/storage/${currentItem.id}`, {
-          item_name,
-          quantity,
-          price,
-        });
+        await axios.put(
+          `https://playstationbackend.netlify.app/.netlify/functions/server/storage/${currentItem.id}`,
+          {
+            item_name,
+            quantity,
+            price,
+          }
+        );
       } else {
         // Add new storage item and optionally create a quote
-        const response = await axios.post('https://playstationbackend.netlify.app/.netlify/functions/server/storage', {
-          item_name,
-          quantity,
-          price,
-          createQuote,
-        });
+        const response = await axios.post(
+          'https://playstationbackend.netlify.app/.netlify/functions/server/storage',
+          {
+            item_name,
+            quantity,
+            price,
+            createQuote,
+          }
+        );
 
         if (createQuote) {
           setQuotes((prevQuotes) => [
             ...prevQuotes,
             {
               id: response.data.quote_id,
-              quote_details: `Quote for ${item_name}`,
+              quote_details: `فاتورة لـ ${item_name}`,
               cost: -(quantity * price),
               date: new Date().toISOString().split('T')[0],
               storage_id: response.data.storage_id,
@@ -106,7 +129,9 @@ const StorageAndQuotes = () => {
   // Handle delete button click
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`https://playstationbackend.netlify.app/.netlify/functions/server/storage/${id}`);
+      await axios.delete(
+        `https://playstationbackend.netlify.app/.netlify/functions/server/storage/${id}`
+      );
       fetchStorageAndQuotes(); // Refresh the list
     } catch (error) {
       console.error('Error deleting storage item:', error);
@@ -219,224 +244,210 @@ const StorageAndQuotes = () => {
   }, []);
 
   return (
-    <Container fluid className="my-4">
-      <Row className="mb-3">
-        <Col>
-          <h2>Storage and Quotes</h2>
-        </Col>
-        <Col className="text-end">
-          <Button variant="primary" onClick={() => setShowModal(true)}>
-            Add Item to Storage
-          </Button>
-        </Col>
-      </Row>
-
-      {/* Storage Items Table */}
-      <Row className="mb-4">
-        <Col>
-          <div className="table-responsive">
-            <Table striped bordered hover>
+    <div dir="rtl">
+      <Container fluid className="my-4" dir="rtl">
+        <Row className="mb-3">
+          <Col>
+            <h2>المخزن وفواتير</h2>
+          </Col>
+          <Col className="text-end">
+            <Button variant="primary" onClick={() => setShowModal(true)}>
+              <FaPlus className="me-2" /> إضافة عنصر للمخزون
+            </Button>
+          </Col>
+        </Row>
+        <div dir="rtl">
+          {/* Modal for Add/Edit storage item */}
+          <Modal show={showModal} onHide={resetForm}>
+            <Modal.Header closeButton>
+              <Modal.Title>{editMode ? 'تعديل العنصر' : 'إضافة عنصر'}</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+            <div dir="rtl">
+              <Form onSubmit={handleSubmit}>
+                <Form.Group className="mb-3">
+                  <Form.Label>اسم العنصر</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="item_name"
+                    value={currentItem.item_name}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>الكمية</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="quantity"
+                    value={currentItem.quantity}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>السعر</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="price"
+                    value={currentItem.price}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </Form.Group>
+                {!editMode && (
+                  <Form.Group className="mb-3">
+                    <Form.Check
+                      type="checkbox"
+                      label="إنشاء فاتورة"
+                      name="createQuote"
+                      checked={currentItem.createQuote}
+                      onChange={handleInputChange}
+                    />
+                  </Form.Group>
+                )}
+                <Button variant="primary" type="submit">
+                  {editMode ? 'تحديث' : 'إضافة'}
+                </Button>
+              </Form>
+              </div>
+            </Modal.Body>
+          </Modal>
+        </div>
+        <div dir="rtl">
+        {/* Storage Table */}
+        <Card className="mb-4">
+          <Card.Header> المخزن</Card.Header>
+          <Card.Body>
+            <Table responsive bordered>
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>Item Name</th>
-                  <th>Quantity</th>
-                  <th>Price</th>
-                  <th>Total Cost</th>
-                  <th>Actions</th>
+                  <th>اسم العنصر</th>
+                  <th>الكمية</th>
+                  <th>السعر</th>
+                  <th>الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
-                {storageItems.map((item, index) => {
-                  const totalCost = item.quantity * item.price;
-                  return (
-                    <tr key={item.id}>
-                      <td>{index + 1}</td>
-                      <td>{item.item_name}</td>
-                      <td>{item.quantity}</td>
-                      <td>${item.price}</td>
-                      <td>${totalCost}</td>
-                      <td>
-                        <Button variant="warning" size="sm" onClick={() => handleEdit(item)} className="me-2">
-                          Edit
-                        </Button>
-                        <Button variant="danger" size="sm" onClick={() => handleDelete(item.id)}>
-                          Delete
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </Table>
-          </div>
-        </Col>
-      </Row>
-
-      {/* Quotes Section */}
-      <Row className="mb-4">
-        <Col>
-          <h3>Quotes</h3>
-        </Col>
-      </Row>
-
-      {/* Search and Filter Inputs */}
-      <Row className="mb-3">
-        <Col md={12}>
-          <InputGroup className="mb-3">
-            <FormControl
-              placeholder="Search by quote details..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-            />
-            <FormControl
-              type="date"
-              placeholder="Start Date"
-              value={filterStartDate}
-              onChange={handleStartDateFilterChange}
-            />
-            <FormControl
-              type="date"
-              placeholder="End Date"
-              value={filterEndDate}
-              onChange={handleEndDateFilterChange}
-            />
-            <Form.Select
-              value={filterMonth}
-              onChange={handleMonthFilterChange}
-            >
-              <option value="">Filter by Month</option>
-              {Array.from({ length: 12 }, (_, i) => (
-                <option key={i + 1} value={i + 1}>
-                  {new Date(0, i).toLocaleString('default', { month: 'long' })}
-                </option>
-              ))}
-            </Form.Select>
-            <Form.Select
-              value={filterYear}
-              onChange={handleYearFilterChange}
-            >
-              <option value="">Filter by Year</option>
-              {Array.from({ length: 10 }, (_, i) => {
-                const year = new Date().getFullYear() - i;
-                return <option key={year} value={year}>{year}</option>;
-              })}
-            </Form.Select>
-          </InputGroup>
-        </Col>
-      </Row>
-
-      {/* Quotes Table */}
-      <Row className="mb-4">
-        <Col>
-          <div className="table-responsive">
-            <Table striped bordered hover>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Quote Details</th>
-                  <th>Cost</th>
-                  <th>Date</th>
-                  <th>Storage ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentQuotes.map((quote, index) => (
-                  <tr key={quote.id}>
-                    <td>{indexOfFirstItem + index + 1}</td>
-                    <td>{quote.quote_details}</td>
-                    <td>${quote.cost}</td>
-                    <td>{quote.date}</td>
-                    <td>{quote.storage_id}</td>
+                {storageItems.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.item_name}</td>
+                    <td>{item.quantity}</td>
+                    <td>{item.price}</td>
+                    <td>
+                      <Button
+                        variant="warning"
+                        size="sm"
+                        onClick={() => handleEdit(item)}
+                        className="me-2"
+                      >
+                        <FaEdit />
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDelete(item.id)}
+                      >
+                        <FaTrashAlt />
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </Table>
-          </div>
-        </Col>
-      </Row>
-
-      {/* Pagination */}
-      <Row>
-        <Col className="d-flex justify-content-center">
-          <Pagination>
-            {Array.from({ length: Math.ceil(filteredQuotes.length / itemsPerPage) }, (_, i) => (
-              <Pagination.Item
-                key={i + 1}
-                active={i + 1 === currentPage}
-                onClick={() => paginate(i + 1)}
-              >
-                {i + 1}
-              </Pagination.Item>
-            ))}
-          </Pagination>
-        </Col>
-      </Row>
-
-      {/* Add/Edit Storage Item Modal */}
-      <Modal show={showModal} onHide={resetForm} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>{editMode ? 'Edit Storage Item' : 'Add Storage Item'}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleSubmit}>
-            {/* Item Name */}
-            <Form.Group controlId="itemName" className="mb-3">
-              <Form.Label>Item Name</Form.Label>
-              <Form.Control
+          </Card.Body>
+        </Card>
+        </div>
+        <div dir="rtl">
+        {/* Filter and Quotes Table */}
+        <Card className="mb-4">
+          <Card.Header>عرض فواتير</Card.Header>
+          <Card.Body>
+            {/* Search and Filters */}
+            <InputGroup className="mb-3">
+              <InputGroup.Text>بحث:</InputGroup.Text>
+              <FormControl
                 type="text"
-                name="item_name"
-                value={currentItem.item_name}
-                onChange={handleInputChange}
-                required
+                placeholder="بحث عن فواتير..."
+                value={searchTerm}
+                onChange={handleSearchChange}
               />
-            </Form.Group>
-
-            {/* Quantity */}
-            <Form.Group controlId="quantity" className="mb-3">
-              <Form.Label>Quantity</Form.Label>
-              <Form.Control
-                type="number"
-                name="quantity"
-                value={currentItem.quantity}
-                onChange={handleInputChange}
-                required
-              />
-            </Form.Group>
-
-            {/* Price */}
-            <Form.Group controlId="price" className="mb-3">
-              <Form.Label>Price</Form.Label>
-              <Form.Control
-                type="number"
-                name="price"
-                value={currentItem.price}
-                onChange={handleInputChange}
-                required
-              />
-            </Form.Group>
-
-            {/* Create Quote Checkbox */}
-            {!editMode && (
-              <Form.Group controlId="createQuote" className="mb-3">
-                <Form.Check
-                  type="checkbox"
-                  name="createQuote"
-                  label="Create Quote with Negative Cost"
-                  checked={currentItem.createQuote}
-                  onChange={handleInputChange}
+            </InputGroup>
+            <Row className="mb-3">
+              <Col>
+                <Form.Control
+                  type="date"
+                  placeholder="تصفية بتاريخ البدء"
+                  value={filterStartDate}
+                  onChange={handleStartDateFilterChange}
                 />
-              </Form.Group>
-            )}
+              </Col>
+              <Col>
+                <Form.Control
+                  type="date"
+                  placeholder="تصفية بتاريخ النهاية"
+                  value={filterEndDate}
+                  onChange={handleEndDateFilterChange}
+                />
+              </Col>
+              <Col>
+                <Form.Control
+                  type="number"
+                  placeholder="تصفية بالشهر"
+                  value={filterMonth}
+                  onChange={handleMonthFilterChange}
+                />
+              </Col>
+              <Col>
+                <Form.Control
+                  type="number"
+                  placeholder="تصفية بالسنة"
+                  value={filterYear}
+                  onChange={handleYearFilterChange}
+                />
+              </Col>
+            </Row>
 
-            {/* Submit Button */}
-            <Button variant="primary" type="submit" className="w-100">
-              {editMode ? 'Update' : 'Add'}
-            </Button>
-          </Form>
-        </Modal.Body>
-      </Modal>
-    </Container>
+            {/* Quotes Table */}
+            <Table responsive bordered>
+              <thead>
+                <tr>
+                  <th>التفاصيل</th>
+                  <th>التكلفة</th>
+                  <th>التاريخ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentQuotes.map((quote) => (
+                  <tr key={quote.id}>
+                    <td>{quote.quote_details}</td>
+                    <td>{quote.cost}</td>
+                    <td>{quote.date}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+
+            {/* Pagination */}
+            <Pagination>
+              {Array.from(
+                { length: Math.ceil(filteredQuotes.length / itemsPerPage) },
+                (_, index) => (
+                  <Pagination.Item
+                    key={index + 1}
+                    active={index + 1 === currentPage}
+                    onClick={() => paginate(index + 1)}
+                  >
+                    {index + 1}
+                  </Pagination.Item>
+                )
+              )}
+            </Pagination>
+          </Card.Body>
+        </Card>
+        </div>
+      </Container>
+    </div>
   );
 };
 

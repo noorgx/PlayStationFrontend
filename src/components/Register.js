@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Form, Button, Container, Card, Alert } from 'react-bootstrap';
+import { Form, Button, Container, Card, Alert, InputGroup } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { FaUser, FaEnvelope, FaLock, FaPhoneAlt, FaUserTag } from 'react-icons/fa'; // Icons
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -30,73 +31,77 @@ const Register = () => {
       setFormData({ name: '', emailOrPhone: '', password: '', role: 'user' });
       navigate('/login'); // Redirect to login after registration
     } catch (error) {
-      setError(error.response?.data?.message || 'Error registering user. Please try again.');
+      setError(error.response?.data?.message || 'حدث خطأ أثناء التسجيل. حاول مرة أخرى.');
     }
   };
 
   return (
+    <div dir="rtl">
     <Container className="d-flex justify-content-center align-items-center my-4" style={{ minHeight: '80vh' }}>
       <Card style={{ width: '100%', maxWidth: '400px', padding: '20px', margin: '20px' }}>
         <Card.Body>
-          <h2 className="text-center mb-4">Register</h2>
+          <h2 className="text-center mb-4">التسجيل</h2>
           {message && <Alert variant="success" className="mb-3">{message}</Alert>}
           {error && <Alert variant="danger" className="mb-3">{error}</Alert>}
           <Form onSubmit={handleSubmit}>
+            
+            {/* Name Input */}
             <Form.Group className="mb-3">
-              <Form.Label>Name</Form.Label>
-              <Form.Control
-                type="text"
-                name="name"
-                placeholder="Enter your name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
+              <Form.Label>الاسم</Form.Label>
+              <InputGroup>
+                <InputGroup.Text><FaUser /></InputGroup.Text>
+                <Form.Control
+                  type="text"
+                  name="name"
+                  placeholder="أدخل اسمك"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
+              </InputGroup>
             </Form.Group>
 
+            {/* Email or Phone Input */}
             <Form.Group className="mb-3">
-              <Form.Label>Email or Phone</Form.Label>
-              <Form.Control
-                type="text"
-                name="emailOrPhone"
-                placeholder="Enter your email or phone"
-                value={formData.emailOrPhone}
-                onChange={handleChange}
-                required
-              />
+              <Form.Label>البريد الإلكتروني أو رقم تلفون</Form.Label>
+              <InputGroup>
+                <InputGroup.Text>{formData.emailOrPhone.includes('@') ? <FaEnvelope /> : <FaPhoneAlt />}</InputGroup.Text>
+                <Form.Control
+                  type="text"
+                  name="emailOrPhone"
+                  placeholder="أدخل البريد الإلكتروني أو رقم تلفون"
+                  value={formData.emailOrPhone}
+                  onChange={handleChange}
+                  required
+                />
+              </InputGroup>
             </Form.Group>
 
+            {/* Password Input */}
             <Form.Group className="mb-3">
-              <Form.Label>Password</Form.Label>
-              <Form.Control
-                type="password"
-                name="password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
+              <Form.Label>كلمة المرور</Form.Label>
+              <InputGroup>
+                <InputGroup.Text><FaLock /></InputGroup.Text>
+                <Form.Control
+                  type="password"
+                  name="password"
+                  placeholder="أدخل كلمة المرور"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+              </InputGroup>
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Role</Form.Label>
-              <Form.Select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-              >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </Form.Select>
-            </Form.Group>
-
+            {/* Submit Button */}
             <Button variant="primary" type="submit" className="w-100">
-              Register
+              تسجيل
             </Button>
           </Form>
         </Card.Body>
       </Card>
     </Container>
+    </div>
   );
 };
 

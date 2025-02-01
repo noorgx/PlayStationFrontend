@@ -30,7 +30,7 @@ const AdminPanel = () => {
       const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/users');
       setUsers(response.data);
     } catch (error) {
-      setError('Error fetching users');
+      setError('حدث خطأ أثناء جلب المستخدمين');
     }
   };
 
@@ -54,17 +54,17 @@ const AdminPanel = () => {
       if (editUserId) {
         // Update user
         await axios.put(`https://playstationbackend.netlify.app/.netlify/functions/server/users/${editUserId}`, payload);
-        setMessage('User updated successfully!');
+        setMessage('تم تحديث المستخدم بنجاح!');
       } else {
         // Add new user
         await axios.post('https://playstationbackend.netlify.app/.netlify/functions/server/users/register', payload);
-        setMessage('User added successfully!');
+        setMessage('تم إضافة المستخدم بنجاح!');
       }
       fetchUsers(); // Refresh the user list
       setFormData({ name: '', emailOrPhone: '', password: '', role: 'user' }); // Reset form
       setEditUserId(null); // Clear edit mode
     } catch (error) {
-      setError(error.response?.data?.error || 'Error saving user');
+      setError(error.response?.data?.error || 'حدث خطأ أثناء حفظ المستخدم');
     }
   };
 
@@ -81,16 +81,17 @@ const AdminPanel = () => {
   const handleDelete = async (id) => {
     try {
       await axios.delete(`https://playstationbackend.netlify.app/.netlify/functions/server/users/${id}`);
-      setMessage('User deleted successfully!');
+      setMessage('تم حذف المستخدم بنجاح!');
       fetchUsers(); // Refresh the user list
     } catch (error) {
-      setError('Error deleting user');
+      setError('حدث خطأ أثناء حذف المستخدم');
     }
   };
 
   return (
+    <div dir="rtl">
     <Container className="mt-4">
-      <h2 className="text-center mb-4">Admin Panel</h2>
+      <h2 className="text-center mb-4">لوحة التحكم للمشرف</h2>
       {message && <Alert variant="success">{message}</Alert>}
       {error && <Alert variant="danger">{error}</Alert>}
 
@@ -99,11 +100,11 @@ const AdminPanel = () => {
         <Card.Body>
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label>Name</Form.Label>
+              <Form.Label>الاسم</Form.Label>
               <Form.Control
                 type="text"
                 name="name"
-                placeholder="Enter name"
+                placeholder="أدخل الاسم"
                 value={formData.name}
                 onChange={handleChange}
                 required
@@ -111,11 +112,11 @@ const AdminPanel = () => {
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Email or Phone</Form.Label>
+              <Form.Label>البريد الإلكتروني أو الهاتف</Form.Label>
               <Form.Control
                 type="text"
                 name="emailOrPhone"
-                placeholder="Enter email or phone"
+                placeholder="أدخل البريد الإلكتروني أو الهاتف"
                 value={formData.emailOrPhone}
                 onChange={handleChange}
                 required
@@ -123,11 +124,11 @@ const AdminPanel = () => {
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Password</Form.Label>
+              <Form.Label>كلمة المرور</Form.Label>
               <Form.Control
                 type="password"
                 name="password"
-                placeholder="Enter password"
+                placeholder="أدخل كلمة المرور"
                 value={formData.password}
                 onChange={handleChange}
                 required
@@ -135,19 +136,19 @@ const AdminPanel = () => {
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Role</Form.Label>
+              <Form.Label>الوظيفة</Form.Label>
               <Form.Select
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
               >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
+                <option value="user">كاشير</option>
+                <option value="admin">ادارة</option>
               </Form.Select>
             </Form.Group>
 
             <Button variant="primary" type="submit" className="w-100">
-              {editUserId ? 'Update User' : 'Add User'}
+              {editUserId ? 'تحديث المستخدم' : 'إضافة مستخدم'}
             </Button>
           </Form>
         </Card.Body>
@@ -156,14 +157,14 @@ const AdminPanel = () => {
       {/* User List */}
       <Card>
         <Card.Body>
-          <h3 className="text-center mb-4">User List</h3>
+          <h3 className="text-center mb-4">قائمة المستخدمين</h3>
           <Table striped bordered hover responsive>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Actions</th>
+                <th>الاسم</th>
+                <th> رقم التلفون/الايميل</th>
+                <th>الوظيفة</th>
+                <th>الإجراءات</th>
               </tr>
             </thead>
             <tbody>
@@ -171,7 +172,7 @@ const AdminPanel = () => {
                 <tr key={user.id}>
                   <td>{user.name}</td>
                   <td>{user.email}</td>
-                  <td>{user.role}</td>
+                  <td>{user.role=='admin'?'ادارة':'كاشير'}</td>
                   <td>
                     <div className="d-flex flex-wrap gap-2">
                       <Button
@@ -179,14 +180,14 @@ const AdminPanel = () => {
                         size="sm"
                         onClick={() => handleEdit(user)}
                       >
-                        Edit
+                        تعديل
                       </Button>
                       <Button
                         variant="danger"
                         size="sm"
                         onClick={() => handleDelete(user.id)}
                       >
-                        Delete
+                        حذف
                       </Button>
                     </div>
                   </td>
@@ -197,6 +198,7 @@ const AdminPanel = () => {
         </Card.Body>
       </Card>
     </Container>
+    </div>
   );
 };
 

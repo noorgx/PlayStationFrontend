@@ -17,7 +17,7 @@ const Logout = ({ onLogout }) => {
         // After logout logic completes, redirect to the home page
         navigate('/'); // Or you can redirect to a login page
       } catch (err) {
-        setError('An error occurred while logging out. Please try again.');
+        setError('حدث خطأ أثناء تسجيل الخروج. يرجى المحاولة مرة أخرى.');
       } finally {
         setLoading(false);
       }

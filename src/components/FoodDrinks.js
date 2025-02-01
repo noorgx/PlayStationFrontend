@@ -1,7 +1,7 @@
-// src/components/FoodDrinks.js
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Container, Row, Col } from 'react-bootstrap';
+import { Table, Button, Modal, Form, Container, Card, Row, Col } from 'react-bootstrap';
 import axios from 'axios';
+import { FaPlus, FaEdit, FaTrash, FaImage, FaUtensils, FaGlassCheers } from 'react-icons/fa'; // Import icons
 
 const FoodDrinks = () => {
   const [foodDrinks, setFoodDrinks] = useState([]);
@@ -14,7 +14,9 @@ const FoodDrinks = () => {
     price: '',
     quantity: '',
     total_price: '',
+    image_link: '', // New field for image link
   });
+  const [imagePreview, setImagePreview] = useState(''); // State for image preview
 
   // Retrieve user from local storage
   const storedUser = JSON.parse(localStorage.getItem('user'));
@@ -41,6 +43,11 @@ const FoodDrinks = () => {
       ...currentItem,
       [name]: value,
     });
+
+    // If the image link changes, update the image preview
+    if (name === 'image_link') {
+      setImagePreview(value); // Update image preview
+    }
   };
 
   // Handle form submission (add or update)
@@ -65,6 +72,7 @@ const FoodDrinks = () => {
   const handleEdit = (item) => {
     setCurrentItem(item);
     setEditMode(true);
+    setImagePreview(item.image_link); // Set image preview from existing data
     setShowModal(true);
   };
 
@@ -87,68 +95,78 @@ const FoodDrinks = () => {
       price: '',
       quantity: '',
       total_price: '',
+      image_link: '', // Reset the image link as well
     });
+    setImagePreview(''); // Reset image preview
     setEditMode(false);
     setShowModal(false);
   };
 
   return (
-    <Container className="mt-4"> {/* Add margin-top to the container */}
-      <h2 className="mb-4">Food & Drinks</h2> {/* Add margin-bottom to the heading */}
-      
+    <div dir="rtl">
+    <Container className="mt-4">
+      <h2 className="mb-4 text-center">
+        <FaUtensils className="me-2" /> المأكولات والمشروبات <FaGlassCheers className="ms-2" />
+      </h2>
+
       {/* Only show "Add Food/Drink" button if user is admin */}
       {userRole === 'admin' && (
         <Button variant="primary" onClick={() => setShowModal(true)} className="mb-3">
-          Add Food/Drink
+          <FaPlus className="me-2" /> إضافة مأكولات/مشروبات
         </Button>
       )}
 
       {/* Responsive Table */}
-      <Table striped bordered hover responsive className="mb-4"> {/* Add margin-bottom to the table */}
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Price</th>
-            <th>Quantity</th>
-            <th>Total Price</th>
-            {/* Only show "Actions" column if user is admin */}
-            {userRole === 'admin' && <th>Actions</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {foodDrinks.map((item) => (
-            <tr key={item.id}>
-              <td>{item.item_name}</td>
-              <td>{item.item_type}</td>
-              <td>{item.price}</td>
-              <td>{item.quantity}</td>
-              <td>{item.total_price}</td>
-              {/* Only show edit/delete buttons if user is admin */}
-              {userRole === 'admin' && (
-                <td>
-                  <Button variant="warning" onClick={() => handleEdit(item)} className="me-2">
-                    Edit
-                  </Button>
-                  <Button variant="danger" onClick={() => handleDelete(item.id)}>
-                    Delete
-                  </Button>
-                </td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+      <Card className="shadow">
+        <Card.Body>
+          <Table striped bordered hover responsive className="mb-0">
+            <thead>
+              <tr>
+                <th>الاسم</th>
+                <th>النوع</th>
+                <th>السعر</th>
+                <th>الكمية</th>
+                <th>السعر الكلي</th>
+                {userRole === 'admin' && <th>الإجراءات</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {foodDrinks.map((item) => (
+                <tr key={item.id}>
+                  <td>{item.item_name}</td>
+                  <td>{item.item_type}</td>
+                  <td>{item.price}</td>
+                  <td>{item.quantity}</td>
+                  <td>{item.total_price}</td>
+                  {userRole === 'admin' && (
+                    <td>
+                      <Button variant="warning" onClick={() => handleEdit(item)} className="me-2">
+                        <FaEdit className="me-1" /> تعديل
+                      </Button>
+                      <Button variant="danger" onClick={() => handleDelete(item.id)}>
+                        <FaTrash className="me-1" /> حذف
+                      </Button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
 
       {/* Add/Edit Food/Drink Modal */}
       <Modal show={showModal} onHide={resetForm}>
         <Modal.Header closeButton>
-          <Modal.Title>{editMode ? 'Edit Food/Drink' : 'Add Food/Drink'}</Modal.Title>
+          <Modal.Title>
+            {editMode ? <FaEdit className="me-2" /> : <FaPlus className="me-2" />}
+            {editMode ? 'تعديل مأكولات/مشروبات' : 'إضافة مأكولات/مشروبات'}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleSubmit}>
-            <Form.Group controlId="itemName" className="mb-3"> {/* Add margin-bottom to form groups */}
-              <Form.Label>Item Name</Form.Label>
+            <Form.Group controlId="itemName" className="mb-3">
+              <Form.Label>اسم العنصر</Form.Label>
               <Form.Control
                 type="text"
                 name="item_name"
@@ -157,8 +175,8 @@ const FoodDrinks = () => {
                 required
               />
             </Form.Group>
-            <Form.Group controlId="itemType" className="mb-3"> {/* Add margin-bottom to form groups */}
-              <Form.Label>Item Type</Form.Label>
+            <Form.Group controlId="itemType" className="mb-3">
+              <Form.Label>نوع العنصر</Form.Label>
               <Form.Control
                 type="text"
                 name="item_type"
@@ -167,8 +185,8 @@ const FoodDrinks = () => {
                 required
               />
             </Form.Group>
-            <Form.Group controlId="price" className="mb-3"> {/* Add margin-bottom to form groups */}
-              <Form.Label>Price</Form.Label>
+            <Form.Group controlId="price" className="mb-3">
+              <Form.Label> السعر في محل</Form.Label>
               <Form.Control
                 type="number"
                 name="price"
@@ -177,8 +195,8 @@ const FoodDrinks = () => {
                 required
               />
             </Form.Group>
-            <Form.Group controlId="quantity" className="mb-3"> {/* Add margin-bottom to form groups */}
-              <Form.Label>Quantity</Form.Label>
+            <Form.Group controlId="quantity" className="mb-3">
+              <Form.Label>الكمية</Form.Label>
               <Form.Control
                 type="number"
                 name="quantity"
@@ -187,8 +205,8 @@ const FoodDrinks = () => {
                 required
               />
             </Form.Group>
-            <Form.Group controlId="totalPrice" className="mb-3"> {/* Add margin-bottom to form groups */}
-              <Form.Label>Total Price</Form.Label>
+            <Form.Group controlId="totalPrice" className="mb-3">
+              <Form.Label>السعر جملة</Form.Label>
               <Form.Control
                 type="number"
                 name="total_price"
@@ -197,13 +215,40 @@ const FoodDrinks = () => {
                 required
               />
             </Form.Group>
+
+            {/* New Field for Image Link */}
+            <Form.Group controlId="imageLink" className="mb-3">
+              <Form.Label>
+                <FaImage className="me-2" /> رابط الصورة
+              </Form.Label>
+              <Form.Control
+                type="text"
+                name="image_link"
+                value={currentItem.image_link}
+                onChange={handleInputChange}
+                placeholder="أدخل رابط الصورة"
+              />
+            </Form.Group>
+
+            {/* Show Image Preview */}
+            {imagePreview && (
+              <div className="mb-3">
+                <img
+                  src={imagePreview}
+                  alt="معاينة مأكولات/مشروبات"
+                  style={{ width: '100%', maxHeight: '300px', objectFit: 'cover' }}
+                />
+              </div>
+            )}
+
             <Button variant="primary" type="submit">
-              {editMode ? 'Update' : 'Add'}
+              {editMode ? 'تحديث' : 'إضافة'}
             </Button>
           </Form>
         </Modal.Body>
       </Modal>
     </Container>
+    </div>
   );
 };
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Form, Button, Container, Card, Alert, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { FaUser, FaLock, FaEnvelope, FaPhone } from 'react-icons/fa';
 
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({
@@ -34,26 +35,27 @@ const Login = ({ onLogin }) => {
         navigate('/'); // Redirect users to the home page
       }
     } catch (error) {
-      setError('Invalid credentials. Please try again.');
+      setError('بيانات غير صحيحة. يرجى المحاولة مرة أخرى.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
+    <div dir="rtl">
     <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
-      <Card style={{ width: '100%', maxWidth: '400px', padding: '20px', margin: '15px' }}>
+      <Card style={{ width: '100%', maxWidth: '400px', padding: '20px', margin: '15px', borderRadius: '15px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
         <Card.Body>
-          <h2 className="text-center mb-4">Login</h2>
+          <h2 className="text-center mb-4">تسجيل الدخول</h2>
           {message && <Alert variant="success" className="mb-3">{message}</Alert>}
           {error && <Alert variant="danger" className="mb-3">{error}</Alert>}
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label>Email or Phone</Form.Label>
+              <Form.Label><FaEnvelope /> البريد الإلكتروني أو <FaPhone /> تلفون</Form.Label>
               <Form.Control
                 type="text"
                 name="emailOrPhone"
-                placeholder="Enter your email or phone"
+                placeholder="أدخل بريدك الإلكتروني أو تلفون مسجل"
                 value={formData.emailOrPhone}
                 onChange={handleChange}
                 required
@@ -61,11 +63,11 @@ const Login = ({ onLogin }) => {
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Password</Form.Label>
+              <Form.Label><FaLock /> كلمة المرور</Form.Label>
               <Form.Control
                 type="password"
                 name="password"
-                placeholder="Enter your password"
+                placeholder="أدخل كلمة المرور"
                 value={formData.password}
                 onChange={handleChange}
                 required
@@ -77,17 +79,19 @@ const Login = ({ onLogin }) => {
               type="submit"
               className="w-100 mb-3"
               disabled={loading}
+              style={{ borderRadius: '20px', padding: '10px' }}
             >
               {loading ? (
                 <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
               ) : (
-                'Login'
+                'تسجيل الدخول'
               )}
             </Button>
           </Form>
         </Card.Body>
       </Card>
     </Container>
+    </div>
   );
 };
 
