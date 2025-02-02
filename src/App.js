@@ -42,14 +42,14 @@ function App() {
     if (user) {
       return element;
     } else {
-      return <Navigate to="/login" />;
+      return <Navigate to="PlayStationFrontend/login" />;
     }
   };
 
   // Redirect if user is already logged in
   const AuthRoute = ({ element }) => {
     if (user) {
-      return <Navigate to="/rooms" />;
+      return <Navigate to="PlayStationFrontend/rooms" />;
     } else {
       return element;
     }
@@ -60,47 +60,47 @@ function App() {
       <CustomNavbar user={user} onLogout={handleLogout} />
       <Routes>
         <Route
-          path="/"
+          path="PlayStationFrontend/"
           element={<ProtectedRoute element={<Rooms />} />}
         />
         <Route
-          path="/calc"
+          path="PlayStationFrontend/calc"
           element={<ProtectedRoute element={<Calc />} />}
         />
         <Route
-          path="/rooms"
+          path="PlayStationFrontend/rooms"
           element={<ProtectedRoute element={<Rooms />} />}
         />
         <Route
-          path="/machines"
+          path="PlayStationFrontend/machines"
           element={<ProtectedRoute element={<Machines />} />}
         />
         <Route
-          path="/food-drinks"
+          path="PlayStationFrontend/food-drinks"
           element={<ProtectedRoute element={<FoodDrinks />} />}
         />
         <Route
-          path="/quotes"
+          path="PlayStationFrontend/quotes"
           element={<ProtectedRoute element={<Quotes />} />}
         />
         <Route
-          path="/storage"
+          path="PlayStationFrontend/storage"
           element={<ProtectedRoute element={<StorageAndQuotes />} />}
         />
         <Route
-          path="/admin"
+          path="PlayStationFrontend/admin"
           element={<ProtectedRoute element={<AdminPanel />} />}
         />
         <Route
-          path="/register"
+          path="PlayStationFrontend/register"
           element={<AuthRoute element={<Register />} />}
         />
         <Route
-          path="/login"
+          path="PlayStationFrontend/login"
           element={<AuthRoute element={<Login onLogin={handleLogin} />} />}
         />
         <Route
-          path="/logout"
+          path="PlayStationFrontend/logout"
           element={<Logout onLogout={handleLogout} />}
         />
       </Routes>
