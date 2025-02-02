@@ -93,7 +93,7 @@ const Machines = () => {
       machine_name: '',
       price_per_hour_single: '',
       price_per_hour_multi: '',
-      is_available: false,
+      is_available: true,
       room: '',
       image_link: '', // Reset image link as well
     });
