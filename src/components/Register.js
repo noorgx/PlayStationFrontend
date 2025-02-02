@@ -29,7 +29,7 @@ const Register = () => {
       const response = await axios.post('https://playstationbackend.netlify.app/.netlify/functions/server/users/register', formData);
       setMessage(response.data.message);
       setFormData({ name: '', emailOrPhone: '', password: '', role: 'user' });
-      navigate('/login'); // Redirect to login after registration
+      navigate('/PlayStationFrontend/login'); // Redirect to login after registration
     } catch (error) {
       setError(error.response?.data?.message || 'حدث خطأ أثناء التسجيل. حاول مرة أخرى.');
     }

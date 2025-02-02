@@ -30,7 +30,7 @@ const Login = ({ onLogin }) => {
       setMessage(response.data.message);
       onLogin(response.data); // Update user state in App.js
       if (response.data.role === 'admin') {
-        navigate('/admin'); // Redirect admins to the admin panel
+        navigate('/'); // Redirect admins to the admin panel
       } else {
         navigate('/'); // Redirect users to the home page
       }

@@ -15,7 +15,7 @@ const Logout = ({ onLogout }) => {
         await onLogout();
         
         // After logout logic completes, redirect to the home page
-        navigate('/'); // Or you can redirect to a login page
+        navigate('/PlayStationFrontend/login'); // Or you can redirect to a login page
       } catch (err) {
         setError('حدث خطأ أثناء تسجيل الخروج. يرجى المحاولة مرة أخرى.');
       } finally {
