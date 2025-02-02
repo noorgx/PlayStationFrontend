@@ -39,16 +39,16 @@ function App() {
 
   // Protected route for authenticated users
   const ProtectedRoute = ({ element }) => {
-    if (user) {
+    if (localStorage.getItem('user')) {
       return element;
     } else {
-      return <Navigate to="/" />;
+      return <Navigate to="PlayStationFrontend/login" />;
     }
   };
 
   // Redirect if user is already logged in
   const AuthRoute = ({ element }) => {
-    if (user) {
+    if (localStorage.getItem('user')) {
       return <Navigate to="PlayStationFrontend/" />;
     } else {
       return element;
