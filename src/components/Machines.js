@@ -64,6 +64,7 @@ const Machines = () => {
       console.log(machineResponse);
       fetchMachines();
       setShowModal(false);
+      resetForm();
     } catch (error) {
       console.error('حدث خطأ أثناء حفظ الجهاز:', error);
     }
