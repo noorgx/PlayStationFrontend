@@ -42,7 +42,7 @@ function App() {
     if (user) {
       return element;
     } else {
-      return <Navigate to="PlayStationFrontend/login" />;
+      return <Navigate to="/" />;
     }
   };
 
