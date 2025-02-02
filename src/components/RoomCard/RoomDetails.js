@@ -375,11 +375,11 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
     useEffect(() => {
         const intervalId = setInterval(() => {
             refreshTotalCost();
-        }, 60000); // 60000 milliseconds = 1 minute
+        }, 5000); // 60000 milliseconds = 1 minute
 
         // Clean up the interval when the component unmounts
         return () => clearInterval(intervalId);
-    }, [customer]); // Re-run effect if customer changes
+    }, []); // Re-run effect if customer changes
     // Render the component
     if (!customer) {
         return <p>لا توجد بيانات للعميل.</p>;
