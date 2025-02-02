@@ -21,7 +21,7 @@ const CustomNavbar = ({ user, onLogout }) => {
           {user ? (
             <>
               <Nav className="me-auto">
-                <Nav.Link as={Link} to="/PlayStationFrontend/rooms" className="me-3 d-flex align-items-center">
+                <Nav.Link as={Link} to="/PlayStationFrontend/" className="me-3 d-flex align-items-center">
                   <FaDoorOpen className="me-2" /> الغرف
                 </Nav.Link> {/* Add margin-right to Nav.Link */}
                 <Nav.Link as={Link} to="/PlayStationFrontend/machines" className="me-3 d-flex align-items-center">
