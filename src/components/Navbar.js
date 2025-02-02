@@ -8,7 +8,7 @@ const CustomNavbar = ({ user, onLogout }) => {
 
   const handleLogout = () => {
     onLogout();
-    navigate('/login');
+    navigate('/PlayStationFrontend/login');
   };
 
   return (

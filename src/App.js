@@ -49,7 +49,7 @@ function App() {
   // Redirect if user is already logged in
   const AuthRoute = ({ element }) => {
     if (user) {
-      return <Navigate to="PlayStationFrontend/rooms" />;
+      return <Navigate to="PlayStationFrontend/" />;
     } else {
       return element;
     }
@@ -68,7 +68,7 @@ function App() {
           element={<ProtectedRoute element={<Calc />} />}
         />
         <Route
-          path="PlayStationFrontend/rooms"
+          path="PlayStationFrontend/"
           element={<ProtectedRoute element={<Rooms />} />}
         />
         <Route
