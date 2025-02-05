@@ -1,5 +1,5 @@
-// src/components/RoomCard/TimerDisplay.js
 import React from 'react';
+import { FaClock } from 'react-icons/fa';
 
 const formatTime = (time) => {
     if (!time) return '00:00:00';
@@ -12,7 +12,12 @@ const formatTime = (time) => {
 const TimerDisplay = ({ timeLeft }) => {
     return (
         <div className="text-center mb-3">
-            <h4>{timeLeft !== null ? formatTime(timeLeft) : '00:00:00'}</h4>
+            <div className="d-flex justify-content-center align-items-center">
+                <FaClock className="me-2" size={24} style={{ color: '#007bff' }} />
+                <h4 className="mb-0">
+                    {timeLeft !== null ? formatTime(timeLeft) : '00:00:00'}
+                </h4>
+            </div>
         </div>
     );
 };

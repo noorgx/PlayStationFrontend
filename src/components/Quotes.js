@@ -10,9 +10,17 @@ const Quotes = () => {
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [currentQuote, setCurrentQuote] = useState({
-        quote_details: '',
-        cost: 0,
-        date: '',
+        user_name: '',
+        machine_name: '',
+        room: '',
+        start_time: '',
+        end_time: '',
+        total_cost: 0,
+        foods_drinks_cost: 0,
+        machine_usage_cost: 0,
+        logs: [],
+        food_drinks: [],
+        date: ''
     });
     const [selectedQuoteDetails, setSelectedQuoteDetails] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
@@ -37,14 +45,17 @@ const Quotes = () => {
     // Calculate total cost for filtered quotes
     const totalCost = filteredQuotes.reduce((sum, quote) => sum + parseFloat(quote.cost), 0);
 
-    // Handle form input changes
+    // Update form inputs to match new structure
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setCurrentQuote({
-            ...currentQuote,
-            [name]: value,
-        });
+        setCurrentQuote(prev => ({
+            ...prev,
+            [name]: name === 'logs' || name === 'food_drinks'
+                ? value.split(',')
+                : value
+        }));
     };
+
 
     // Handle form submission (add or update quote)
     const handleSubmit = async (e) => {
@@ -188,208 +199,225 @@ const Quotes = () => {
     return (
         <div dir="rtl">
             <Container fluid className="my-4">
-                <Row className="mb-3">
-                    <Col>
-                        <h2><FaFileInvoiceDollar className="me-2" /> الفواتير</h2>
-                    </Col>
-                    <Col className="text-end">
-                        <Button variant="primary" onClick={() => setShowModal(true)}>
-                            <FaPlus className="me-2" /> إضافة فاتورة
-                        </Button>
-                    </Col>
-                </Row>
+                {/* Modal Form */}
+                <Modal show={showModal} onHide={resetForm} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>{editMode ? 'تعديل الفاتورة' : 'إضافة فاتورة'}</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Form onSubmit={handleSubmit}>
+                            <Form.Group className="mb-3">
+                                <Form.Label>اسم المستخدم</Form.Label>
+                                <Form.Control
+                                    name="user_name"
+                                    value={currentQuote.user_name}
+                                    onChange={handleInputChange}
+                                    required
+                                />
+                            </Form.Group>
 
-                {/* Search and Filter Inputs */}
-                <Row className="mb-3">
-                    <Col md={12}>
-                        <InputGroup className="mb-3">
-                            <InputGroup.Text><FaSearch /></InputGroup.Text>
-                            <FormControl
-                                placeholder="بحث حسب التفاصيل..."
-                                value={searchTerm}
-                                onChange={handleSearchChange}
-                            />
-                            <InputGroup.Text><FaCalendarAlt /></InputGroup.Text>
-                            <FormControl
-                                type="date"
-                                placeholder="تاريخ البداية"
-                                value={filterStartDate}
-                                onChange={handleStartDateFilterChange}
-                            />
-                            <InputGroup.Text><FaCalendarAlt /></InputGroup.Text>
-                            <FormControl
-                                type="date"
-                                placeholder="تاريخ النهاية"
-                                value={filterEndDate}
-                                onChange={handleEndDateFilterChange}
-                            />
-                            <Form.Select
-                                value={filterMonth}
-                                onChange={handleMonthFilterChange}
-                            >
-                                <option value="">الشهر</option>
-                                {Array.from({ length: 12 }, (_, i) => (
-                                    <option key={i + 1} value={i + 1}>
-                                        {new Date(0, i).toLocaleString('default', { month: 'long' })}
-                                    </option>
-                                ))}
-                            </Form.Select>
-                            <Form.Select
-                                value={filterYear}
-                                onChange={handleYearFilterChange}
-                            >
-                                <option value="">السنة</option>
-                                {Array.from({ length: 10 }, (_, i) => {
-                                    const year = new Date().getFullYear() - i;
-                                    return <option key={year} value={year}>{year}</option>;
-                                })}
-                            </Form.Select>
-                        </InputGroup>
-                    </Col>
-                </Row>
-
-                {/* Quotes Table */}
-                <Row>
-                    <Col md={12}>
-                        <div className="table-responsive">
-                            <Table striped bordered hover>
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>تفاصيل الفاتورة</th>
-                                        <th>التكلفة ($)</th>
-                                        <th>التاريخ</th>
-                                        <th>الإجراءات</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {currentQuotes.map((quote, index) => (
-                                        <tr key={quote.id}>
-                                            <td>{indexOfFirstItem + index + 1}</td>
-                                            <td>
-                                                {quote.quote_details.length > 50
-                                                    ? `${quote.quote_details.substring(0, 50)}...`
-                                                    : quote.quote_details}
-                                                <Button
-                                                    variant="link"
-                                                    size="sm"
-                                                    onClick={() => handleShowDetails(quote.quote_details)}
-                                                >
-                                                    عرض التفاصيل
-                                                </Button>
-                                            </td>
-                                            <td>{quote.cost}</td>
-                                            <td>{quote.date}</td>
-                                            <td>
-                                                <Button variant="warning" size="sm" onClick={() => handleEdit(quote)} className="me-2">
-                                                    <FaEdit /> تعديل
-                                                </Button>
-                                                <Button variant="danger" size="sm" onClick={() => handleDelete(quote.id)}>
-                                                    <FaTrash /> حذف
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td colSpan="2" className="text-end"><strong>إجمالي التكلفة:</strong></td>
-                                        <td><strong>{totalCost.toFixed(2)}</strong></td>
-                                        <td colSpan="2"></td>
-                                    </tr>
-                                </tfoot>
-                            </Table>
-                        </div>
-                    </Col>
-                </Row>
-
-                {/* Pagination */}
-                <Row>
-                    <Col md={12} className="d-flex justify-content-center">
-                        <Pagination>
-                            {Array.from({ length: Math.ceil(filteredQuotes.length / itemsPerPage) }, (_, i) => (
-                                <Pagination.Item
-                                    key={i + 1}
-                                    active={i + 1 === currentPage}
-                                    onClick={() => paginate(i + 1)}
-                                >
-                                    {i + 1}
-                                </Pagination.Item>
-                            ))}
-                        </Pagination>
-                    </Col>
-                </Row>
-                <div dir="rtl">
-                    {/* Add/Edit Quote Modal */}
-                    <Modal show={showModal} onHide={resetForm} centered>
-                        <Modal.Header closeButton>
-                            <Modal.Title>{editMode ? 'تعديل الفاتورة' : 'إضافة فاتورة'}</Modal.Title>
-                        </Modal.Header>
-                        <Modal.Body>
-                            <Form onSubmit={handleSubmit}>
-                                <Form.Group controlId="quoteDetails" className="mb-3">
-                                    <Form.Label>تفاصيل الفاتورة</Form.Label>
-                                    <Form.Control
-                                        type="text"
-                                        name="quote_details"
-                                        value={currentQuote.quote_details}
-                                        onChange={handleInputChange}
-                                        required
-                                    />
-                                </Form.Group>
-                                <Form.Group controlId="cost" className="mb-3">
-                                    <Form.Label>التكلفة</Form.Label>
-                                    <InputGroup>
-                                        <InputGroup.Text><FaDollarSign /></InputGroup.Text>
+                            <Row className="mb-3">
+                                <Col md={6}>
+                                    <Form.Group>
+                                        <Form.Label>اسم الجهاز</Form.Label>
                                         <Form.Control
-                                            type="number"
-                                            name="cost"
-                                            value={currentQuote.cost}
+                                            name="machine_name"
+                                            value={currentQuote.machine_name}
                                             onChange={handleInputChange}
                                             required
                                         />
-                                    </InputGroup>
-                                </Form.Group>
-                                <Form.Group controlId="date" className="mb-3">
-                                    <Form.Label>التاريخ</Form.Label>
-                                    <InputGroup>
-                                        <InputGroup.Text><FaCalendarAlt /></InputGroup.Text>
+                                    </Form.Group>
+                                </Col>
+                                <Col md={6}>
+                                    <Form.Group>
+                                        <Form.Label>الغرفة</Form.Label>
                                         <Form.Control
-                                            type="date"
-                                            name="date"
-                                            value={currentQuote.date}
+                                            name="room"
+                                            value={currentQuote.room}
                                             onChange={handleInputChange}
                                             required
                                         />
-                                    </InputGroup>
-                                </Form.Group>
-                                <Button variant="primary" type="submit">
-                                    {editMode ? 'تحديث' : 'إضافة'}
-                                </Button>
-                            </Form>
-                        </Modal.Body>
-                    </Modal>
-                </div>
-                <div dir="rtl">
-                    {/* Show Details Modal */}
-                    <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} centered>
-                        <Modal.Header closeButton>
-                            <Modal.Title>تفاصيل الفاتورة</Modal.Title>
-                        </Modal.Header>
-                        <Modal.Body>
-                            <Card>
-                                <Card.Body>
-                                    <pre style={{ whiteSpace: 'pre-wrap' }}>{selectedQuoteDetails}</pre>
-                                </Card.Body>
-                            </Card>
-                        </Modal.Body>
-                        <Modal.Footer>
-                            <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
-                                إغلاق
+                                    </Form.Group>
+                                </Col>
+                            </Row>
+
+                            <Row className="mb-3">
+                                <Col md={6}>
+                                    <Form.Group>
+                                        <Form.Label>وقت البدء</Form.Label>
+                                        <Form.Control
+                                            type="datetime-local"
+                                            name="start_time"
+                                            value={currentQuote.start_time}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    </Form.Group>
+                                </Col>
+                                <Col md={6}>
+                                    <Form.Group>
+                                        <Form.Label>وقت الانتهاء</Form.Label>
+                                        <Form.Control
+                                            type="datetime-local"
+                                            name="end_time"
+                                            value={currentQuote.end_time}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Form.Group>
+                                </Col>
+                            </Row>
+
+                            <Row className="mb-3">
+                                <Col md={4}>
+                                    <Form.Group>
+                                        <Form.Label>تكلفة الأكل/الشرب</Form.Label>
+                                        <InputGroup>
+                                            <InputGroup.Text><FaDollarSign /></InputGroup.Text>
+                                            <Form.Control
+                                                type="number"
+                                                name="foods_drinks_cost"
+                                                value={currentQuote.foods_drinks_cost}
+                                                onChange={handleInputChange}
+                                                required
+                                            />
+                                        </InputGroup>
+                                    </Form.Group>
+                                </Col>
+                                <Col md={4}>
+                                    <Form.Group>
+                                        <Form.Label>تكلفة الاستخدام</Form.Label>
+                                        <InputGroup>
+                                            <InputGroup.Text><FaDollarSign /></InputGroup.Text>
+                                            <Form.Control
+                                                type="number"
+                                                name="machine_usage_cost"
+                                                value={currentQuote.machine_usage_cost}
+                                                onChange={handleInputChange}
+                                                required
+                                            />
+                                        </InputGroup>
+                                    </Form.Group>
+                                </Col>
+                                <Col md={4}>
+                                    <Form.Group>
+                                        <Form.Label>المجموع</Form.Label>
+                                        <InputGroup>
+                                            <InputGroup.Text><FaDollarSign /></InputGroup.Text>
+                                            <Form.Control
+                                                type="number"
+                                                name="total_cost"
+                                                value={currentQuote.total_cost}
+                                                onChange={handleInputChange}
+                                                required
+                                            />
+                                        </InputGroup>
+                                    </Form.Group>
+                                </Col>
+                            </Row>
+
+                            <Form.Group className="mb-3">
+                                <Form.Label>السجلات (مفصولة بفواصل)</Form.Label>
+                                <Form.Control
+                                    as="textarea"
+                                    name="logs"
+                                    value={currentQuote.logs.join(',')}
+                                    onChange={handleInputChange}
+                                />
+                            </Form.Group>
+
+                            <Form.Group className="mb-3">
+                                <Form.Label>الأطعمة/المشروبات (مفصولة بفواصل)</Form.Label>
+                                <Form.Control
+                                    as="textarea"
+                                    name="food_drinks"
+                                    value={currentQuote.food_drinks.join(',')}
+                                    onChange={handleInputChange}
+                                />
+                            </Form.Group>
+
+                            <Button variant="primary" type="submit">
+                                {editMode ? 'تحديث' : 'إضافة'}
                             </Button>
-                        </Modal.Footer>
-                    </Modal>
-                </div>
+                        </Form>
+                    </Modal.Body>
+                </Modal>
+
+                {/* Updated Table Structure */}
+                <Table striped bordered hover>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>المستخدم</th>
+                            <th>الجهاز</th>
+                            <th>الغرفة</th>
+                            <th>المجموع</th>
+                            <th>التاريخ</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {currentQuotes.map((quote, index) => (
+                            <tr key={quote.id}>
+                                <td>{indexOfFirstItem + index + 1}</td>
+                                <td>{quote.user_name}</td>
+                                <td>{quote.machine_name}</td>
+                                <td>{quote.room}</td>
+                                <td>{quote.total_cost}</td>
+                                <td>{new Date(quote.date).toLocaleDateString()}</td>
+                                <td>
+                                    <Button variant="warning" size="sm" onClick={() => handleEdit(quote)} className="me-2">
+                                        <FaEdit /> تعديل
+                                    </Button>
+                                    <Button variant="danger" size="sm" onClick={() => handleDelete(quote.id)}>
+                                        <FaTrash /> حذف
+                                    </Button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Table>
+
+                {/* Updated Details Modal */}
+                <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} centered size="lg">
+                    <Modal.Header closeButton>
+                        <Modal.Title>تفاصيل الفاتورة الكاملة</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Card>
+                            <Card.Body>
+                                <Row>
+                                    <Col md={6}>
+                                        <p><strong>المستخدم:</strong> {selectedQuoteDetails.user_name}</p>
+                                        <p><strong>الجهاز:</strong> {selectedQuoteDetails.machine_name}</p>
+                                        <p><strong>الغرفة:</strong> {selectedQuoteDetails.room}</p>
+                                        <p><strong>وقت البدء:</strong> {new Date(selectedQuoteDetails.start_time).toLocaleString()}</p>
+                                        <p><strong>وقت الانتهاء:</strong> {selectedQuoteDetails.end_time || 'لم ينته بعد'}</p>
+                                    </Col>
+                                    <Col md={6}>
+                                        <p><strong>تكلفة الأكل/الشرب:</strong> {selectedQuoteDetails.foods_drinks_cost}</p>
+                                        <p><strong>تكلفة الاستخدام:</strong> {selectedQuoteDetails.machine_usage_cost}</p>
+                                        <p><strong>المجموع الكلي:</strong> {selectedQuoteDetails.total_cost}</p>
+                                        <p><strong>التاريخ:</strong> {new Date(selectedQuoteDetails.date).toLocaleDateString()}</p>
+                                    </Col>
+                                </Row>
+
+                                <h5 className="mt-4">السجلات:</h5>
+                                <ul>
+                                    {selectedQuoteDetails.logs?.map((log, index) => (
+                                        <li key={index}>{log}</li>
+                                    ))}
+                                </ul>
+
+                                <h5 className="mt-4">الأطعمة/المشروبات:</h5>
+                                <ul>
+                                    {selectedQuoteDetails.food_drinks?.map((item, index) => (
+                                        <li key={index}>{item}</li>
+                                    ))}
+                                </ul>
+                            </Card.Body>
+                        </Card>
+                    </Modal.Body>
+                </Modal>
             </Container>
         </div>
     );

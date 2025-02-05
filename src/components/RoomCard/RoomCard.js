@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Button, Row, Col, Modal, Badge } from 'react-bootstrap';
-import { FaPlay, FaStop, FaClock, FaDoorOpen, FaUser, FaUsers, FaInfoCircle } from 'react-icons/fa'; // Import icons
+import { Card, Button, Row, Col, Modal, Badge, ProgressBar, Form } from 'react-bootstrap';
+import { 
+  FaPlay, FaStop, FaClock, FaDoorOpen, FaUser, 
+  FaUsers, FaInfoCircle, FaMoneyBillWave, FaCoins 
+} from 'react-icons/fa';
 import MachineSelector from './MachineSelector';
 import TimerModal from './TimerModal';
 import TimerDisplay from './TimerDisplay';
@@ -13,6 +16,7 @@ import axios from 'axios';
 const RoomCard = ({ room, machines, customer: initialCustomer }) => {
     const [selectedMachine, setSelectedMachine] = useState(null);
     const [isOpen, setIsOpen] = useState(false);
+    const [machineDiscount, setDiscount] = useState(0);
     const [isTimer, setIsTimer] = useState(false);
     const [mode, setMode] = useState(null);
     const [startTime, setStartTime] = useState(null);
@@ -27,7 +31,6 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
     const [totalCost, setTotalCost] = useState(0);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [customers, setCustomers] = useState([]);
-    const [hasPlayedNotification, setHasPlayedNotification] = useState(false); // Track if notification has been played
 
     // Fetch customers data
     const fetchCustomers = async () => {
@@ -62,6 +65,8 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
     // Timer logic
     useEffect(() => {
         let interval;
+        const hasPlayedNotification = localStorage.getItem(`${room}-hasPlayedNotification`) === 'true';
+
         if (startTime) {
             setIsTimerRunning(true);
             interval = setInterval(() => {
@@ -78,7 +83,7 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
                         // Play notification sound only once
                         if (!hasPlayedNotification && audioRef.current) {
                             audioRef.current.play();
-                            setHasPlayedNotification(true); // Mark notification as played
+                            localStorage.setItem(`${room}-hasPlayedNotification`, 'true'); // Mark notification as played
                         }
                     }
                 } else {
@@ -87,11 +92,13 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
                 }
             }, 1000);
         }
+
         if (Notification.permission !== 'granted') {
             Notification.requestPermission();
         }
+
         return () => clearInterval(interval);
-    }, [isTimerRunning, startTime, endTime, hasPlayedNotification]); // Add hasPlayedNotification to dependencies
+    }, [isTimerRunning, startTime, endTime, room]);
 
     // Callback function to update customer state
     const updateCustomer = (updatedCustomer) => {
@@ -103,6 +110,7 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
         const machineId = e.target.value;
         const machine = machines.find((m) => m.id === machineId);
         setSelectedMachine(machine);
+        setDiscount(parseInt(machine.discount, 10));
     };
 
     const handleOpen = () => {
@@ -162,9 +170,10 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
                 price_per_hour_single: selectedMachine.price_per_hour_single,
                 price_per_hour_multi: selectedMachine.price_per_hour_multi,
                 multi_single: mode,
+                discount: machineDiscount,
                 logs: [],
             },
-            price_per_hour: pricePerHour,
+            price_per_hour: pricePerHour - ((machineDiscount / 100) * pricePerHour),
             duration_hours: hours,
             duration_minutes: minutes,
             isOpenTime: isOpen,
@@ -173,6 +182,7 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
         try {
             const response = await submitRoomData(roomData);
             if (response.status === 201) {
+                localStorage.setItem(`${room}-hasPlayedNotification`, 'false'); // Reset notification state on reload
                 window.location.reload();
             }
         } catch (error) {
@@ -190,112 +200,173 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
     };
 
     return (
-        <div dir="rtl">
-            <Card className="mb-4">
+        <div dir="rtl" className="mb-4">
+            <Card className="shadow-lg">
                 <audio ref={audioRef} src={notificationSound} preload="auto"></audio>
-                <Card.Header className="text-center position-relative">
-                    {/* Room Name */}
-                    <h5 className="mb-0">{room}</h5>
-                    {/* Status Indicators */}
-                    <div className="position-absolute top-0 end-0 d-flex gap-2 p-2">
+                <Card.Header className="d-flex justify-content-between align-items-center bg-primary text-white">
+                    <h4 className="mb-0 fw-bold">{room}</h4>
+                    <div className="d-flex gap-2">
                         {isTimer && (
-                            <Badge bg="warning" className="d-flex align-items-center">
-                                <FaClock className="me-2" /> وضع المؤقت
+                            <Badge bg="warning" className="d-flex align-items-center py-2">
+                                <FaClock className="me-2" /> مؤقت
                             </Badge>
                         )}
                         {isOpen && (
-                            <Badge bg="success" className="d-flex align-items-center">
-                                <FaDoorOpen className="me-2" /> Open
+                            <Badge bg="success" className="d-flex align-items-center py-2">
+                                <FaDoorOpen className="me-2" /> مفتوح
                             </Badge>
                         )}
                         {mode === 'Single' && (
-                            <Badge bg="primary" className="d-flex align-items-center">
+                            <Badge bg="info" className="d-flex align-items-center py-2">
                                 <FaUser className="me-2" /> فردي
                             </Badge>
                         )}
                         {mode === 'Multi' && (
-                            <Badge bg="success" className="d-flex align-items-center">
+                            <Badge bg="success" className="d-flex align-items-center py-2">
                                 <FaUsers className="me-2" /> زوجي
                             </Badge>
                         )}
                     </div>
                 </Card.Header>
+
                 <Card.Body>
-                    {selectedMachine && (
-                        <div className="text-center mb-3">
-                            <img
-                                src={selectedMachine.image_link || 'https://socrates-ca.github.io/team-socrates-2024.jpg'}
-                                alt={selectedMachine.machine_name}
-                                style={{ width: '100%', maxWidth: '200px', height: 'auto' }}
+                    {/* Machine Image and Selector */}
+                    <Row className="mb-4">
+                        <Col md={5} className="text-center mb-3 mb-md-0">
+                            {selectedMachine && (
+                                <img
+                                    src={selectedMachine.image_link || 'https://via.placeholder.com/200'}
+                                    alt={selectedMachine.machine_name}
+                                    className="img-fluid rounded-3 border"
+                                    style={{ maxHeight: '200px', objectFit: 'contain' }}
+                                />
+                            )}
+                        </Col>
+                        <Col md={7}>
+                            <MachineSelector
+                                machines={machines}
+                                selectedMachine={selectedMachine}
+                                handleMachineChange={handleMachineChange}
+                                disabled={startTime}
                             />
-                        </div>
-                    )}
-
-                    <MachineSelector
-                        machines={machines}
-                        selectedMachine={selectedMachine}
-                        handleMachineChange={handleMachineChange}
-                        disabled={isTimerRunning} // Disable machine selector when timer is running
-                    />
-
-                    {/* Centered Buttons for Timer, Open, Single, and Multi */}
-                    <div className="d-flex flex-column align-items-center gap-2 mb-3">
-                        {!startTime && (
-                            <>
-                                <div className="d-flex gap-2">
-                                    <Button variant="primary" onClick={handleOpen} disabled={isOpen}>
-                                        <FaDoorOpen className="me-2" /> {isOpen ? 'Open' : 'Open'}
-                                    </Button>
-                                    <Button variant="secondary" onClick={handleTimer}>
-                                        <FaClock className="me-2" /> مؤقت
-                                    </Button>
+                            {selectedMachine && (
+                                <div className="mt-3 p-3 bg-light rounded">
+                                    <h5 className="text-primary">
+                                        <FaMoneyBillWave className="me-2" />
+                                        الأسعار:
+                                    </h5>
+                                    <div className="d-flex justify-content-around">
+                                        <div>
+                                            <FaUser className="text-info me-2" />
+                                            فردي: {selectedMachine.price_per_hour_single} ر.س
+                                        </div>
+                                        <div>
+                                            <FaUsers className="text-success me-2" />
+                                            زوجي: {selectedMachine.price_per_hour_multi} ر.س
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="d-flex gap-2">
+                            )}
+                        </Col>
+                    </Row>
+
+                    {/* Mode Selection and Controls */}
+                    <div className="bg-light p-3 rounded mb-4">
+                        <Row className="g-3">
+                            <Col md={6}>
+                                <div className="d-grid gap-2">
                                     <Button
-                                        variant={mode === 'Single' ? 'primary' : 'outline-primary'}
+                                        variant={mode === 'Single' ? 'info' : 'outline-info'}
                                         onClick={handleSingle}
                                         disabled={isTimerRunning}
+                                        size="lg"
                                     >
-                                        <FaUser className="me-2" /> فردي
+                                        <FaUser className="me-2" />
+                                        وضع الفردي
                                     </Button>
                                     <Button
                                         variant={mode === 'Multi' ? 'success' : 'outline-success'}
                                         onClick={handleMulti}
                                         disabled={isTimerRunning}
+                                        size="lg"
                                     >
-                                        <FaUsers className="me-2" /> زوجي
+                                        <FaUsers className="me-2" />
+                                        وضع الزوجي
                                     </Button>
                                 </div>
-                            </>
-                        )}
+                            </Col>
+                            <Col md={6}>
+                                <div className="d-grid gap-2">
+                                    <Button 
+                                        variant="outline-primary" 
+                                        onClick={handleOpen} 
+                                        disabled={isOpen}
+                                        size="lg"
+                                    >
+                                        <FaDoorOpen className="me-2" />
+                                        {isOpen ? 'مفتوح حالياً' : 'فتح الوقت المفتوح'}
+                                    </Button>
+                                    <Button 
+                                        variant="warning" 
+                                        onClick={handleTimer}
+                                        size="lg"
+                                    >
+                                        <FaClock className="me-2" />
+                                        بدء المؤقت
+                                    </Button>
+                                </div>
+                            </Col>
+                        </Row>
                     </div>
 
-                    <TimerDisplay timeLeft={timeLeft} />
-
-                    {!startTime && (
-                        <Row className="mb-3">
-                            <Col className="d-flex justify-content-center">
-                                <Button variant="success" onClick={handleStart}>
-                                    <FaPlay className="me-2" /> بدء
-                                </Button>
-                            </Col>
-                        </Row>
+                    {/* Timer Display */}
+                    {timeLeft !== null && (
+                        <div className="mb-4 p-3 bg-dark text-white rounded text-center">
+                            <h4 className="mb-3">
+                                <FaClock className="me-2" />
+                                الوقت المتبقي
+                            </h4>
+                            <TimerDisplay timeLeft={timeLeft} />
+                            {totalCost > 0 && (
+                                <div className="mt-3 h5">
+                                    <FaCoins className="me-2 text-warning" />
+                                    الإجمالي: {totalCost} ر.س
+                                </div>
+                            )}
+                        </div>
                     )}
 
-                    {startTime && (
-                        <Row className="mb-3">
-                            <Col className="d-flex justify-content-center">
-                                <Button variant="info" onClick={() => setShowDetailsModal(true)}>
-                                    <FaInfoCircle className="me-2" /> تفاصيل
+                    {/* Action Buttons */}
+                    <Row className="g-3">
+                        {!startTime ? (
+                            <Col>
+                                <Button 
+                                    variant="success" 
+                                    onClick={handleStart}
+                                    size="lg"
+                                    className="w-100 py-3"
+                                >
+                                    <FaPlay className="me-2" />
+                                    بدء الجلسة
                                 </Button>
                             </Col>
-                        </Row>
-                    )}
-
-                    <RoomStatus isOpen={isOpen} mode={mode} startTime={startTime} endTime={endTime} />
+                        ) : (
+                            <Col>
+                                <Button 
+                                    variant="info" 
+                                    onClick={() => setShowDetailsModal(true)}
+                                    size="lg"
+                                    className="w-100 py-3"
+                                >
+                                    <FaInfoCircle className="me-2" />
+                                    عرض التفاصيل الكاملة
+                                </Button>
+                            </Col>
+                        )}
+                    </Row>
                 </Card.Body>
 
-                {/* Timer Modal */}
+                {/* Modals */}
                 <TimerModal
                     show={showTimerModal}
                     onHide={() => setShowTimerModal(false)}
@@ -305,31 +376,24 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
                     minutes={minutes}
                     setMinutes={setMinutes}
                 />
-                <div dir="rtl">
-                    {/* Details Modal */}
-                    <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} size="lg">
-                        <div dir="rtl">
-                            <div dir="ltr">
-                            <Modal.Header closeButton>
-                                <Modal.Title>تفاصيل الغرفة</Modal.Title>
-                            </Modal.Header>
-                            </div>
-                            <Modal.Body>
-                                <RoomDetails
-                                    customer={customer}
-                                    fetchCustomers={fetchCustomers}
-                                    updateCustomer={updateCustomer}
-                                />
-                            </Modal.Body>
-                        </div>
-                        <Modal.Footer>
-                            <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
-                                إغلاق
-                            </Button>
-                        </Modal.Footer>
 
-                    </Modal>
-                </div>
+                <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} size="xl">
+                    <div dir="rtl">
+                        <Modal.Header closeButton className="bg-primary text-white">
+                            <Modal.Title>
+                                <FaInfoCircle className="me-2" />
+                                تفاصيل الغرفة - {room}
+                            </Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body>
+                            <RoomDetails
+                                customer={customer}
+                                fetchCustomers={fetchCustomers}
+                                updateCustomer={updateCustomer}
+                            />
+                        </Modal.Body>
+                    </div>
+                </Modal>
             </Card>
         </div>
     );

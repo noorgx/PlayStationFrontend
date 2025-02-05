@@ -1,5 +1,5 @@
-import React, { useState ,useEffect} from 'react';
-import { Card, ListGroup, Button, Modal, Row, Col } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Card, ListGroup, Button, Modal, Row, Col, Form } from 'react-bootstrap';
 import { FaUtensils, FaGamepad, FaClock, FaMoneyBillWave, FaTrash, FaSyncAlt, FaStopCircle, FaFileInvoiceDollar, FaTimesCircle } from 'react-icons/fa'; // Import icons
 import axios from 'axios';
 import AddFoodDrinkForm from './AddFoodDrinkForm';
@@ -7,11 +7,19 @@ import ChangeModeModal from './ChangeModeModal';
 
 const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer }) => {
     const [customer, setCustomer] = useState(initialCustomer);
+    const [initialStartTime, setInitialStartTime] = useState(initialCustomer.start_time); // Track initial start time
+    const [showCancelButton, setShowCancelButton] = useState(true); // Control button visibility
     const [showForm, setShowForm] = useState(false);
     const [showModeModal, setShowModeModal] = useState(false);
     const [showQuoteModal, setShowQuoteModal] = useState(false);
     const [quoteDetails, setQuoteDetails] = useState(null);
     const [sessionEndedTrigger, setSessionEndedTrigger] = useState({});
+    // Add new state for discount and additional cost
+    const [manualDiscount, setManualDiscount] = useState(0);
+    const [discountReason, setDiscountReason] = useState('');
+    const [additionalCost, setAdditionalCost] = useState(0);
+    const [additionalCostReason, setAdditionalCostReason] = useState('');
+    const [loading, setLoading] = useState(false); // Add loading state
 
     // Helper function to calculate time difference and update total_cost
     const calculateTotalCost = (customer) => {
@@ -28,11 +36,12 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
         }, 0) || 0;
 
         // Update total_cost
-        return timeCost + additionalCost;
+        return timeCost;
     };
 
     // Function to refresh the total cost
     const refreshTotalCost = async () => {
+        if (loading) return; // Don't refresh if an update is in progress
         try {
             const updatedCustomer = { ...customer };
 
@@ -51,11 +60,10 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
                 updatedCustomer
             );
 
-            // Update the local state
-            setCustomer(updatedCustomer);
-
             // Notify the parent component
             updateCustomer(updatedCustomer);
+            // Update the local state
+            setCustomer(updatedCustomer);
         } catch (error) {
             console.error('Error refreshing total cost:', error);
         }
@@ -63,6 +71,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
 
     // Handle adding a food/drink item
     const handleAddFoodDrink = async (item) => {
+        setLoading(true); // Start loading
         try {
             const updatedCustomer = { ...customer };
 
@@ -110,11 +119,14 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             setShowForm(false);
         } catch (error) {
             console.error('Error adding/updating drink/food:', error);
+        } finally {
+            setLoading(false); // End loading
         }
     };
 
     // Handle deleting a food/drink item
     const handleDeleteDrinkFood = async (index) => {
+        setLoading(true); // Start loading
         try {
             const updatedCustomer = { ...customer };
 
@@ -148,11 +160,14 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             updateCustomer(updatedCustomer);
         } catch (error) {
             console.error('Error deleting drink/food:', error);
+        } finally {
+            setLoading(false); // End loading
         }
     };
 
     // Handle changing the mode and price per hour
     const handleChangeMode = async (oldMode, newMode, oldPricePerHour, newPricePerHour) => {
+        setLoading(true); // Start loading
         try {
             const updatedCustomer = { ...customer };
 
@@ -196,7 +211,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
 
             // Update the mode and price_per_hour
             updatedCustomer.current_machine.multi_single = newMode;
-            updatedCustomer.price_per_hour = parseFloat(newPricePerHour);
+            updatedCustomer.price_per_hour = parseFloat(newPricePerHour) - ((updatedCustomer.current_machine.discount / 100) * parseFloat(newPricePerHour));
 
             // Update the customer on the server
             await axios.put(
@@ -211,6 +226,8 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             updateCustomer(updatedCustomer);
         } catch (error) {
             console.error('Error changing mode:', error);
+        } finally {
+            setLoading(false); // End loading
         }
     };
 
@@ -236,68 +253,94 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
     // Handle generating a quote
     const handleGenerateQuote = () => {
         // Check if the session ended trigger is true for this customer
-        if (!sessionEndedTrigger[customer.id]) {
+        const currentTime = new Date().getTime();
+
+        if (initialCustomer.end_time <= currentTime) {
             alert('من فضلك تأكد من أن الجلسة انتهت');
             return; // Exit the function early
         }
 
+        // Calculate the total cost of foods and drinks
+        const foodsDrinksCost = customer.drinks_foods.reduce((total, item) => {
+            return total + item.price * item.quantity;
+        }, 0);
+
+        // Calculate the machine usage cost (total_cost - foods/drinks cost)
+        const machineUsageCost = customer.total_cost - foodsDrinksCost;
+        const baseTotal = customer.total_cost;
         // Format logs
-        const logsDetails = customer.current_machine.logs
-            .map((log, index) => (
-                `السجل ${index + 1}: تم تغيير الوضع من "${log.old_mode}" إلى "${log.new_mode}" (الوقت المنقضي: ${log.time_spent_hours} ساعة ${log.time_spent_minutes} دقيقة، التكلفة: $${log.time_cost.toFixed(2)}) من ${new Date(log.old_start_time).toLocaleString()} إلى ${new Date(log.timestamp).toLocaleString()}`
-            ))
-            .join('\n');
+        const logsDetails = customer.current_machine.logs.map((log, index) => ({
+            log_number: index + 1,
+            old_mode: log.old_mode,
+            new_mode: log.new_mode,
+            time_spent_hours: log.time_spent_hours,
+            time_spent_minutes: log.time_spent_minutes,
+            time_cost: log.time_cost.toFixed(2),
+            old_start_time: new Date(log.old_start_time).toLocaleString(),
+            timestamp: new Date(log.timestamp).toLocaleString(),
+        }));
 
         // Format foods and drinks
-        const foodDrinksDetails = customer.drinks_foods
-            .map((item, index) => (
-                `السلعة ${index + 1}: ${item.item_name}, السعر: ${item.price}, الكمية: ${item.quantity}`
-            ))
-            .join('\n');
+        const foodDrinksDetails = customer.drinks_foods.map((item, index) => ({
+            item_number: index + 1,
+            item_name: item.item_name,
+            price: item.price,
+            quantity: item.quantity,
+            total_cost: (item.price * item.quantity).toFixed(2), // Total cost for this item
+        }));
 
-        // Combine all details into quote_details
+        // Combine all details into a structured quote object
         const quote = {
-            quote_details: (
-                `العميل: ${customer.customer_name}\n` +
-                `الجهاز: ${customer.current_machine.machine_name}\n\n` +
-                `السجلات:\n${logsDetails}\n\n` +
-                `المأكولات/المشروبات:\n${foodDrinksDetails}`
-            ),
-            cost: customer.total_cost,
-            date: new Date().toLocaleDateString(),
+            user_name: JSON.parse(localStorage.getItem('user')).name,
+            machine_name: customer.current_machine.machine_name,
+            room: customer.current_machine.room,
+            start_time: new Date(customer.start_time).toLocaleString(),
+            end_time: customer.end_time ? new Date(customer.end_time).toLocaleString() : 'لم ينته بعد',
+            total_cost: customer.total_cost.toFixed(2), // Total cost (foods/drinks + machine usage)
+            foods_drinks_cost: foodsDrinksCost.toFixed(2), // Total cost for foods/drinks
+            machine_usage_cost: machineUsageCost.toFixed(2), // Total cost for machine usage
+            logs: logsDetails,
+            food_drinks: foodDrinksDetails,
+            date: new Date().toLocaleString(),
+            baseTotal: baseTotal,
+            manualDiscount: 0,
+            discountReason: '',
+            additionalCost: 0,
+            additionalCostReason: '',
+            finalTotal: baseTotal,
         };
 
+        // Set the quote details
         setQuoteDetails(quote);
         setShowQuoteModal(true);
     };
 
-    // Handle payment confirmation
+    // Modified payment confirmation handler
     const handlePaymentConfirmation = async () => {
+        const finalTotal = quoteDetails.baseTotal - manualDiscount + additionalCost;
+
+        const quoteToSend = {
+            ...quoteDetails,
+            manualDiscount: manualDiscount,
+            discountReason: discountReason,
+            additionalCost: additionalCost,
+            additionalCostReason: additionalCostReason,
+            total_cost: finalTotal.toFixed(2),
+        };
+
         try {
-            // Step 1: Create a new quote
-            const quoteResponse = await axios.post('https://playstationbackend.netlify.app/.netlify/functions/server/quotes', {
-                quote_details: quoteDetails.quote_details,
-                cost: quoteDetails.cost,
-                date: quoteDetails.date,
-            });
+            const quoteResponse = await axios.post(
+                'https://playstationbackend.netlify.app/.netlify/functions/server/quotes',
+                quoteToSend
+            );
 
-            // Check if the quote was created successfully
             if (quoteResponse.status === 201) {
-                console.log('تم إنشاء الاقتباس بنجاح:', quoteResponse.data);
-
-                // Step 2: Delete the customer after payment confirmation
-                const deleteResponse = await axios.delete(`https://playstationbackend.netlify.app/.netlify/functions/server/customers/${customer.id}`);
-
-                if (deleteResponse.status === 200) {
-                    console.log('تم حذف العميل بنجاح:', deleteResponse.data);
-                    setShowQuoteModal(false); // Close the modal
-                    fetchCustomers(); // Refresh the customer list
-                    window.location.reload();
-                } else {
-                    console.error('فشل حذف العميل:', deleteResponse.data);
-                }
-            } else {
-                console.error('فشل إنشاء الاقتباس:', quoteResponse.data);
+                await axios.delete(
+                    `https://playstationbackend.netlify.app/.netlify/functions/server/customers/${customer.id}`
+                );
+                setShowQuoteModal(false);
+                fetchCustomers();
+                window.location.reload();
             }
         } catch (error) {
             console.error('خطأ في تأكيد الدفع:', error);
@@ -306,6 +349,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
 
     // Handle ending a customer's session
     const handleEndSession = async () => {
+        setLoading(true); // Start loading
         try {
             // Get the current time
             const currentTime = new Date().toISOString();
@@ -369,17 +413,56 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             fetchCustomers();
         } catch (error) {
             console.error('Error ending session:', error);
+        } finally {
+            setLoading(false); // End loading
         }
     };
+    // Update initialStartTime when initialCustomer changes
+    useEffect(() => {
+        setCustomer(initialCustomer);
+        setInitialStartTime(initialCustomer.start_time);
+    }, [initialCustomer]);
+
+    // Check if 10 minutes have passed since the session started
+    useEffect(() => {
+        const checkTime = () => {
+            const startTime = new Date(initialStartTime).getTime();
+            const currentTime = new Date().getTime();
+            const difference = currentTime - startTime;
+            const tenMinutes = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+            setShowCancelButton(difference <= tenMinutes);
+        };
+
+        checkTime(); // Initial check
+        const intervalId = setInterval(checkTime, 1000 * 60); // Check every minute
+
+        return () => clearInterval(intervalId); // Cleanup
+    }, [initialStartTime]);
     // Use useEffect to set up a timer for refreshing the total cost every minute
     useEffect(() => {
-        const intervalId = setInterval(() => {
-            refreshTotalCost();
-        }, 5000); // 60000 milliseconds = 1 minute
+        const currentTime = new Date().getTime();
+        if (initialCustomer.end_time) {
+            const end_time = new Date(initialCustomer.end_time).getTime();
 
-        // Clean up the interval when the component unmounts
-        return () => clearInterval(intervalId);
-    }, []); // Re-run effect if customer changes
+            if (!loading && end_time >= currentTime) { // Only refresh if not loading
+                const intervalId = setInterval(() => {
+                    refreshTotalCost();
+                }, 5000);
+
+                return () => clearInterval(intervalId);
+            }
+        }
+        else{
+            if (!loading) { // Only refresh if not loading
+                const intervalId = setInterval(() => {
+                    refreshTotalCost();
+                }, 5000);
+
+                return () => clearInterval(intervalId);
+            }
+        }
+    }, [customer, loading]); // Re-run effect if customer or loading changes
     // Render the component
     if (!customer) {
         return <p>لا توجد بيانات للعميل.</p>;
@@ -482,9 +565,11 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
                             <Button variant="success" onClick={handleGenerateQuote}>
                                 <FaFileInvoiceDollar className="me-2" /> انشاء الفاتورة
                             </Button>
-                            <Button variant="danger" onClick={handleCancelSession}>
-                                <FaTimesCircle className="me-2" /> إلغاء الجلسة
-                            </Button>
+                            {showCancelButton && (
+                                <Button variant="danger" onClick={handleCancelSession}>
+                                    <FaTimesCircle className="me-2" /> إلغاء الجلسة
+                                </Button>
+                            )}
                         </Col>
                     </Row>
                 </Card.Body>
@@ -509,19 +594,93 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
 
             {/* نموذج عرض الأسعار والدفع */}
             <div dir="rtl">
-                <Modal show={showQuoteModal} onHide={() => setShowQuoteModal(false)}>
+                <Modal show={showQuoteModal} onHide={() => setShowQuoteModal(false)} size="lg">
                     <Modal.Header closeButton>
-                        <Modal.Title>تفاصيل عرض الأسعار</Modal.Title>
+                        <Modal.Title>تفاصيل الفاتورة</Modal.Title>
                     </Modal.Header>
-                    <div dir="rtl">
-                        <Modal.Body>
-                            <div dir="rtl">
-                                <pre>{quoteDetails?.quote_details}</pre>
-                            </div>
-                            <p><strong>إجمالي التكلفة:</strong>{quoteDetails?.cost.toFixed(2)}</p>
+                    <Modal.Body>
+                        <div dir="rtl">
+                            <p><strong>اسم الجهاز:</strong> {quoteDetails?.machine_name}</p>
+                            <p><strong>الغرفة:</strong> {quoteDetails?.room}</p>
+                            <p><strong>وقت البداية:</strong> {quoteDetails?.start_time}</p>
+                            <p><strong>وقت النهاية:</strong> {quoteDetails?.end_time}</p>
+                            <p><strong>إجمالي التكلفة:</strong> {quoteDetails?.total_cost}</p>
+                            <p><strong>تكلفة المأكولات/المشروبات:</strong> {quoteDetails?.foods_drinks_cost}</p>
+                            <p><strong>تكلفة استخدام الجهاز:</strong> {quoteDetails?.machine_usage_cost}</p>
+                            <h5>السجلات:</h5>
+                            <ul>
+                                {quoteDetails?.logs.map((log, index) => (
+                                    <li key={index}>
+                                        <strong>السجل {log.log_number}:</strong> تم تغيير الوضع من "{log.old_mode}" إلى "{log.new_mode}" <br />
+                                        (الوقت المنقضي: {log.time_spent_hours} ساعات {log.time_spent_minutes} دقائق، التكلفة: {log.time_cost}) <br />
+                                        من {log.old_start_time} إلى {log.timestamp}
+                                    </li>
+                                ))}
+                            </ul>
+
+                            <h5>المأكولات/المشروبات:</h5>
+                            <ul>
+                                {quoteDetails?.food_drinks.map((item, index) => (
+                                    <li key={index}>
+                                        <strong>السلعة {item.item_number}:</strong> {item.item_name}, السعر: {item.price}, الكمية: {item.quantity}, التكلفة الإجمالية: {item.total_cost}
+                                    </li>
+                                ))}
+                            </ul>
+
                             <p><strong>التاريخ:</strong> {quoteDetails?.date}</p>
-                        </Modal.Body>
-                    </div>
+                        </div>
+                        <Form.Group className="mb-3">
+                            <Form.Label>الخصم اليدوي</Form.Label>
+                            <Form.Control
+                                type="number"
+                                value={manualDiscount}
+                                onChange={(e) => setManualDiscount(parseFloat(e.target.value || 0))}
+                            />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                            <Form.Label>سبب الخصم</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={discountReason}
+                                onChange={(e) => setDiscountReason(e.target.value)}
+                            />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                            <Form.Label>تكلفة إضافية</Form.Label>
+                            <Form.Control
+                                type="number"
+                                value={additionalCost}
+                                onChange={(e) => setAdditionalCost(parseFloat(e.target.value || 0))}
+                            />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                            <Form.Label>سبب التكلفة الإضافية</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={additionalCostReason}
+                                onChange={(e) => setAdditionalCostReason(e.target.value)}
+                            />
+                        </Form.Group>
+
+                        <h5 className="mt-4">الملخص النهائي</h5>
+                        <ListGroup>
+                            <ListGroup.Item>
+                                الإجمالي الأساسي: {quoteDetails?.baseTotal.toFixed(2)}
+                            </ListGroup.Item>
+                            <ListGroup.Item>
+                                الخصم: -{manualDiscount.toFixed(2)} ({discountReason})
+                            </ListGroup.Item>
+                            <ListGroup.Item>
+                                تكلفة إضافية: +{additionalCost.toFixed(2)} ({additionalCostReason})
+                            </ListGroup.Item>
+                            <ListGroup.Item variant="success">
+                                الإجمالي النهائي: {(quoteDetails?.baseTotal - manualDiscount + additionalCost).toFixed(2)}
+                            </ListGroup.Item>
+                        </ListGroup>
+                    </Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={() => setShowQuoteModal(false)}>
                             إغلاق

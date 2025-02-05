@@ -11,6 +11,8 @@ import Login from './components/Login';
 import AdminPanel from './components/AdminPanel';
 import Rooms from './components/Rooms';
 import Calc from './components/Calc';
+import Payments from './components/Payments';
+import Reports from './components/Report/Reports';
 import Logout from './components/Logout';
 import './App.css';
 
@@ -42,14 +44,14 @@ function App() {
     if (localStorage.getItem('user')) {
       return element;
     } else {
-      return <Navigate to="PlayStationFrontend/login" />;
+      return <Navigate to="login" />;
     }
   };
 
   // Redirect if user is already logged in
   const AuthRoute = ({ element }) => {
     if (localStorage.getItem('user')) {
-      return <Navigate to="PlayStationFrontend/" />;
+      return <Navigate to="/PlayStationFrontend/" />;
     } else {
       return element;
     }
@@ -62,6 +64,14 @@ function App() {
         <Route
           path="PlayStationFrontend/"
           element={<ProtectedRoute element={<Rooms />} />}
+        />
+        <Route
+          path="PlayStationFrontend/reports"
+          element={<ProtectedRoute element={<Reports />} />}
+        />
+        <Route
+          path="PlayStationFrontend/payments"
+          element={<ProtectedRoute element={<Payments />} />}
         />
         <Route
           path="PlayStationFrontend/calc"

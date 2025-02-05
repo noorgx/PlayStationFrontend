@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Form } from 'react-bootstrap';
+import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
+import { FaSave, FaTimes, FaUser, FaUsers } from 'react-icons/fa';
 
 const ChangeModeModal = ({ show, handleClose, currentMode, pricePerHourSingle, pricePerHourMulti, handleChangeMode }) => {
     // State for the new mode and new price per hour
@@ -23,41 +24,48 @@ const ChangeModeModal = ({ show, handleClose, currentMode, pricePerHourSingle, p
     };
 
     return (
-        <div dir="rtl">
-        <Modal show={show} onHide={handleClose}>
+        <Modal show={show} onHide={handleClose} centered dir="rtl">
             <Modal.Header closeButton>
-                <Modal.Title>تغيير الوضع</Modal.Title>
+                <Modal.Title>
+                    <FaUsers className="me-2" /> تغيير الوضع
+                </Modal.Title>
             </Modal.Header>
             <Modal.Body>
-            <div dir="rtl">
                 <Form>
                     <Form.Group controlId="mode">
                         <Form.Label>الوضع</Form.Label>
-                        <Form.Control
-                            as="select"
-                            value={newMode}
-                            onChange={(e) => {
-                                const selectedMode = e.target.value;
-                                setNewMode(selectedMode);
-                            }}
-                        >
-                            <option value="Single">فردي</option>
-                            <option value="Multi">زوجي</option>
-                        </Form.Control>
+                        <Row>
+                            <Col md={6}>
+                                <Button
+                                    variant={newMode === 'Single' ? 'primary' : 'outline-secondary'}
+                                    onClick={() => setNewMode('Single')}
+                                    className="w-100 mb-2"
+                                >
+                                    <FaUser className="me-2" /> فردي
+                                </Button>
+                            </Col>
+                            <Col md={6}>
+                                <Button
+                                    variant={newMode === 'Multi' ? 'primary' : 'outline-secondary'}
+                                    onClick={() => setNewMode('Multi')}
+                                    className="w-100 mb-2"
+                                >
+                                    <FaUsers className="me-2" /> زوجي
+                                </Button>
+                            </Col>
+                        </Row>
                     </Form.Group>
                 </Form>
-            </div>
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={handleClose}>
-                    إغلاق
+                    <FaTimes className="me-2" /> إغلاق
                 </Button>
                 <Button variant="primary" onClick={handleSubmit}>
-                    حفظ التغييرات
+                    <FaSave className="me-2" /> حفظ التغييرات
                 </Button>
             </Modal.Footer>
         </Modal>
-        </div>
     );
 };
 

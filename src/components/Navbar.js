@@ -13,59 +13,79 @@ const CustomNavbar = ({ user, onLogout }) => {
 
   return (
     <div dir="rtl">
-    <Navbar bg="dark" variant="dark" expand="lg" className="mb-4"> {/* Add margin-bottom to the Navbar */}
-      <Container>
-        <Navbar.Brand as={Link} to="/PlayStationFrontend/" className="me-4">Playstation</Navbar.Brand> {/* Add margin-right to the brand */}
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Collapse id="basic-navbar-nav">
-          {user ? (
-            <>
-              <Nav className="me-auto">
-                <Nav.Link as={Link} to="/PlayStationFrontend/" className="me-3 d-flex align-items-center">
-                  <FaDoorOpen className="me-2" /> الغرف
-                </Nav.Link> {/* Add margin-right to Nav.Link */}
-                <Nav.Link as={Link} to="/PlayStationFrontend/machines" className="me-3 d-flex align-items-center">
-                  <FaGamepad className="me-2" /> الأجهزة
-                </Nav.Link> {/* Add margin-right to Nav.Link */}
-                <Nav.Link as={Link} to="/PlayStationFrontend/food-drinks" className="me-3 d-flex align-items-center">
-                  <FaUtensils className="me-2" /> المأكولات و المشروبات
-                </Nav.Link> {/* Add margin-right to Nav.Link */}
-                <Nav.Link as={Link} to="/PlayStationFrontend/calc" className="me-3 d-flex align-items-center">
-                  <FaCalculator className="me-2" /> الحاسبة
-                </Nav.Link> {/* Add margin-right to Nav.Link */}
-                {user.role === 'admin' && (
-                  <>
-                    <Nav.Link as={Link} to="/PlayStationFrontend/quotes" className="me-3 d-flex align-items-center">
-                      <FaQuoteRight className="me-2" /> الفواتير
-                    </Nav.Link> {/* Add margin-right to Nav.Link */}
-                    <Nav.Link as={Link} to="/PlayStationFrontend/storage" className="me-3 d-flex align-items-center">
-                      <FaWarehouse className="me-2" /> المخزن
-                    </Nav.Link> {/* Add margin-right to Nav.Link */}
-                    <Nav.Link as={Link} to="/PlayStationFrontend/admin" className="me-3 d-flex align-items-center">
-                      <FaUserShield className="me-2" /> لوحة التحكم
-                    </Nav.Link> {/* Add margin-right to Nav.Link */}
-                  </>
-                )}
-              </Nav>
-              <Nav>
-                <Nav.Link onClick={handleLogout} className="d-flex align-items-center">
-                  <FaSignOutAlt className="me-2" /> تسجيل الخروج
+      <Navbar bg="dark" variant="dark" expand="lg" className="mb-4 shadow-sm">
+        <Container>
+          {/* Brand */}
+          <Navbar.Brand as={Link} to="/PlayStationFrontend/" className="me-4">
+            <FaGamepad className="me-2" />
+            PlayStation
+          </Navbar.Brand>
+
+          {/* Navbar Toggle Button for Mobile */}
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+
+          {/* Navbar Links */}
+          <Navbar.Collapse id="basic-navbar-nav">
+            {user ? (
+              <>
+                {/* Left Side Links (After Login) */}
+                <Nav className="me-auto">
+                  <Nav.Link as={Link} to="/PlayStationFrontend/" className="me-3 d-flex align-items-center">
+                    <FaDoorOpen className="me-2" /> الغرف
+                  </Nav.Link>
+                  <Nav.Link as={Link} to="/PlayStationFrontend/machines" className="me-3 d-flex align-items-center">
+                    <FaGamepad className="me-2" /> الأجهزة
+                  </Nav.Link>
+                  <Nav.Link as={Link} to="/PlayStationFrontend/food-drinks" className="me-3 d-flex align-items-center">
+                    <FaUtensils className="me-2" /> المطبخ
+                  </Nav.Link>
+                  <Nav.Link as={Link} to="/PlayStationFrontend/calc" className="me-3 d-flex align-items-center">
+                    <FaCalculator className="me-2" /> الحاسبة
+                  </Nav.Link>
+
+                  {/* Admin Links */}
+                  {user.role === 'admin' && (
+                    <>
+                      <Nav.Link as={Link} to="/PlayStationFrontend/payments" className="me-3 d-flex align-items-center">
+                        <FaQuoteRight className="me-2" /> مصاريف
+                      </Nav.Link>
+                      <Nav.Link as={Link} to="/PlayStationFrontend/reports" className="me-3 d-flex align-items-center">
+                        <FaQuoteRight className="me-2" /> تقارير
+                      </Nav.Link>
+                      <Nav.Link as={Link} to="/PlayStationFrontend/quotes" className="me-3 d-flex align-items-center">
+                        <FaQuoteRight className="me-2" /> الفواتير
+                      </Nav.Link>
+                      <Nav.Link as={Link} to="/PlayStationFrontend/storage" className="me-3 d-flex align-items-center">
+                        <FaWarehouse className="me-2" /> المخزن
+                      </Nav.Link>
+                      <Nav.Link as={Link} to="/PlayStationFrontend/admin" className="me-3 d-flex align-items-center">
+                        <FaUserShield className="me-2" /> لوحة التحكم
+                      </Nav.Link>
+                    </>
+                  )}
+                </Nav>
+
+                {/* Right Side Logout */}
+                <Nav>
+                  <Nav.Link onClick={handleLogout} className="d-flex align-items-center">
+                    <FaSignOutAlt className="me-2" /> تسجيل الخروج
+                  </Nav.Link>
+                </Nav>
+              </>
+            ) : (
+              <Nav className="ms-auto">
+                {/* Links for Not Logged In Users */}
+                <Nav.Link as={Link} to="/PlayStationFrontend/register" className="me-3 d-flex align-items-center">
+                  <FaUserPlus className="me-2" /> التسجيل
+                </Nav.Link>
+                <Nav.Link as={Link} to="/PlayStationFrontend/login" className="d-flex align-items-center">
+                  <FaSignInAlt className="me-2" /> تسجيل الدخول
                 </Nav.Link>
               </Nav>
-            </>
-          ) : (
-            <Nav className="ms-auto">
-              <Nav.Link as={Link} to="/PlayStationFrontend/register" className="me-3 d-flex align-items-center">
-                <FaUserPlus className="me-2" /> التسجيل
-              </Nav.Link> {/* Add margin-right to Nav.Link */}
-              <Nav.Link as={Link} to="/PlayStationFrontend/login" className="d-flex align-items-center">
-                <FaSignInAlt className="me-2" /> تسجيل الدخول
-              </Nav.Link>
-            </Nav>
-          )}
-        </Navbar.Collapse>
-      </Container>
-    </Navbar>
+            )}
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
     </div>
   );
 };
