@@ -100,7 +100,7 @@ const AddFoodDrinkForm = ({ show, handleClose, handleSubmit }) => {
                             <option value="">اختر عنصراً</option>
                             {foodDrinks.map((item) => (
                                 <option key={item.id} value={item.id}>
-                                    {item.item_name} - {item.price} ريال (متاح: {item.quantity})
+                                    {item.item_name} - {item.price} (متاح: {item.quantity})
                                 </option>
                             ))}
                         </Form.Control>

@@ -68,9 +68,9 @@ const FinancialReport = ({ filteredQuotes, filteredPayments, netTotal, totalFood
                                 <td>{filteredQuotes.length + i + 1}</td>
                                 <td>
                                     <FontAwesomeIcon icon={faMoneyBillWave} className="me-2" />
-                                    دفعة ({p.period})
+                                    مصروفات
                                 </td>
-                                <td>{p.user_name}</td>
+                                <td>admin</td>
                                 <td>{p.name}</td>
                                 <td className="text-danger">-{p.cost}</td>
                                 <td>

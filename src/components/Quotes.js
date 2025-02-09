@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button, Modal, Form, Table, InputGroup, FormControl, Card, Pagination, Container, Row, Col } from 'react-bootstrap';
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaDollarSign, FaFileInvoiceDollar } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaDollarSign, FaFileInvoiceDollar, FaPrint } from 'react-icons/fa';
 import axios from 'axios';
+import { useReactToPrint } from 'react-to-print'; // Import the library
+import './QuotePDF.css';
 
 const Quotes = () => {
     const [quotes, setQuotes] = useState([]);
@@ -30,6 +32,86 @@ const Quotes = () => {
     const [filterYear, setFilterYear] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
+    // Ref for the PDF content
+    const printableRef = useRef(null);
+    const [selectedQuote, setSelectedQuote] = useState(null);
+    // Function to handle printing
+    const handlePrint = () => {
+        const printSection = printableRef.current;
+        const originalContent = document.body.innerHTML;
+
+        // Wrap the content inside a div with ID "print-section" for visibility control
+        document.body.innerHTML = `<div id="print-section">${printSection.innerHTML}</div>`;
+
+        // Trigger print
+        window.print();
+
+        // Restore the original content after printing
+        document.body.innerHTML = originalContent;
+        window.location.reload(); // Reload the page to restore the app's state
+    };
+
+
+    const QuotePDF = ({ quote }) => (
+        <div dir="rtl" style={{ padding: '10px', fontFamily: 'Arial, sans-serif' }}>
+            <h1 style={{ textAlign: 'right', marginBottom: '10px' }}>فاتورة الاستخدام</h1>
+            <Row>
+                <Col md={6}>
+                    <p><strong>اسم المستخدم:</strong> {quote.user_name}</p>
+                    <p><strong>اسم الجهاز:</strong> {quote.machine_name}</p>
+                    <p><strong>الغرفة:</strong> {quote.room}</p>
+                </Col>
+                <Col md={6}>
+                    <p><strong>تاريخ الفاتورة:</strong> {quote.date}</p>
+                    <p><strong>وقت البدء:</strong> {quote.start_time}</p>
+                    <p><strong>وقت الانتهاء:</strong> {quote.end_time}</p>
+                </Col>
+            </Row>
+            <h5 style={{ marginTop: '10px' }}>تفاصيل التكاليف:</h5>
+            <Row>
+                <Col md={6}>
+                    <p><strong>تكلفة الأكل/الشرب:</strong> {quote.foods_drinks_cost}</p>
+                    <p><strong>تكلفة استخدام الجهاز:</strong> {quote.machine_usage_cost}</p>
+                </Col>
+                <Col md={6}>
+                    <p><strong>التكلفة الإضافية:</strong> {quote.additionalCost}</p>
+                    <p><strong>سبب التكلفة الإضافية:</strong> {quote.additionalCostReason}</p>
+                </Col>
+            </Row>
+            <h5 style={{ marginTop: '10px' }}>المجموع:</h5>
+            <Row>
+                <Col md={6}>
+                    <p><strong>المجموع الأساسي:</strong> {quote.baseTotal}</p>
+                    <p><strong>الخصم اليدوي:</strong> {quote.manualDiscount}</p>
+                </Col>
+                <Col md={6}>
+                    <p><strong>سبب الخصم:</strong> {quote.discountReason}</p>
+                    <p><strong>المجموع النهائي:</strong> {quote.finalTotal}</p>
+                </Col>
+            </Row>
+            <h5 style={{ marginTop: '10px' }}>السجلات:</h5>
+            <ul>
+                {quote.logs?.map((log, index) => (
+                    <li key={index}>
+                        <strong>السجل #{log.log_number}:</strong> {log.new_mode} (السابق: {log.old_mode})<br />
+                        <strong>وقت البدء السابق:</strong> {log.old_start_time}<br />
+                        <strong>التكلفة:</strong> {log.time_cost}<br />
+                        <strong>الوقت المستغرق:</strong> {log.time_spent_hours} ساعات و {log.time_spent_minutes} دقائق<br />
+                        <strong>الوقت:</strong> {log.timestamp}
+                    </li>
+                ))}
+            </ul>
+            <h5 style={{ marginTop: '10px' }}>الأطعمة/المشروبات:</h5>
+            <ul>
+                {quote.food_drinks?.map((item, index) => (
+                    <li key={index}>{item}</li>
+                ))}
+            </ul>
+        </div>
+    );
+
+
+
 
     // Fetch all quotes
     const fetchQuotes = async () => {
@@ -178,10 +260,12 @@ const Quotes = () => {
     };
 
     // Handle "Show Details" button click
-    const handleShowDetails = (quoteDetails) => {
-        setSelectedQuoteDetails(quoteDetails);
+    const handleShowDetails = (quote) => {
+        setSelectedQuoteDetails(quote);
+        setSelectedQuote(quote);  // This ensures the quote is available for printing
         setShowDetailsModal(true);
     };
+
 
     // Pagination logic
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -371,6 +455,9 @@ const Quotes = () => {
                                     <Button variant="danger" size="sm" onClick={() => handleDelete(quote.id)}>
                                         <FaTrash /> حذف
                                     </Button>
+                                    <Button variant="info" size="sm" onClick={() => handleShowDetails(quote)} className="me-2">
+                                        <FaFileInvoiceDollar /> التفاصيل
+                                    </Button>
                                 </td>
                             </tr>
                         ))}
@@ -385,39 +472,21 @@ const Quotes = () => {
                     <Modal.Body>
                         <Card>
                             <Card.Body>
-                                <Row>
-                                    <Col md={6}>
-                                        <p><strong>المستخدم:</strong> {selectedQuoteDetails.user_name}</p>
-                                        <p><strong>الجهاز:</strong> {selectedQuoteDetails.machine_name}</p>
-                                        <p><strong>الغرفة:</strong> {selectedQuoteDetails.room}</p>
-                                        <p><strong>وقت البدء:</strong> {new Date(selectedQuoteDetails.start_time).toLocaleString()}</p>
-                                        <p><strong>وقت الانتهاء:</strong> {selectedQuoteDetails.end_time || 'لم ينته بعد'}</p>
-                                    </Col>
-                                    <Col md={6}>
-                                        <p><strong>تكلفة الأكل/الشرب:</strong> {selectedQuoteDetails.foods_drinks_cost}</p>
-                                        <p><strong>تكلفة الاستخدام:</strong> {selectedQuoteDetails.machine_usage_cost}</p>
-                                        <p><strong>المجموع الكلي:</strong> {selectedQuoteDetails.total_cost}</p>
-                                        <p><strong>التاريخ:</strong> {new Date(selectedQuoteDetails.date).toLocaleDateString()}</p>
-                                    </Col>
-                                </Row>
-
-                                <h5 className="mt-4">السجلات:</h5>
-                                <ul>
-                                    {selectedQuoteDetails.logs?.map((log, index) => (
-                                        <li key={index}>{log}</li>
-                                    ))}
-                                </ul>
-
-                                <h5 className="mt-4">الأطعمة/المشروبات:</h5>
-                                <ul>
-                                    {selectedQuoteDetails.food_drinks?.map((item, index) => (
-                                        <li key={index}>{item}</li>
-                                    ))}
-                                </ul>
+                                {selectedQuote ? (
+                                    <div ref={printableRef}>
+                                        <QuotePDF quote={selectedQuote} />
+                                    </div>
+                                ) : (
+                                    <p>لا توجد تفاصيل للعرض</p>
+                                )}
+                                <Button variant="primary" onClick={handlePrint} className="mt-3">
+                                    <FaPrint /> طباعة كـ PDF
+                                </Button>
                             </Card.Body>
                         </Card>
                     </Modal.Body>
                 </Modal>
+
             </Container>
         </div>
     );

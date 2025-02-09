@@ -5,7 +5,7 @@ import CustomNavbar from './components/Navbar';
 import Machines from './components/Machines';
 import FoodDrinks from './components/FoodDrinks';
 import Quotes from './components/Quotes';
-import StorageAndQuotes from './components/StorageAndQuotes';
+import StorageAndPayments  from './components/StorageAndPayments';
 import Register from './components/Register';
 import Login from './components/Login';
 import AdminPanel from './components/AdminPanel';
@@ -95,7 +95,7 @@ function App() {
         />
         <Route
           path="PlayStationFrontend/storage"
-          element={<ProtectedRoute element={<StorageAndQuotes />} />}
+          element={<ProtectedRoute element={<StorageAndPayments  />} />}
         />
         <Route
           path="PlayStationFrontend/admin"

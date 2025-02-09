@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, ListGroup, Button, Modal, Row, Col, Form } from 'react-bootstrap';
-import { FaUtensils, FaGamepad, FaClock, FaMoneyBillWave, FaTrash, FaSyncAlt, FaStopCircle, FaFileInvoiceDollar, FaTimesCircle } from 'react-icons/fa'; // Import icons
+import { FaUtensils, FaGamepad, FaClock, FaMoneyBillWave, FaTrash, FaSyncAlt, FaStopCircle, FaFileInvoiceDollar, FaTimesCircle, FaPrint } from 'react-icons/fa'; // Import icons
 import axios from 'axios';
 import AddFoodDrinkForm from './AddFoodDrinkForm';
 import ChangeModeModal from './ChangeModeModal';
-
+import QuotePDF from '../Quotes/QuotePDF';
 const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer }) => {
     const [customer, setCustomer] = useState(initialCustomer);
     const [initialStartTime, setInitialStartTime] = useState(initialCustomer.start_time); // Track initial start time
@@ -20,6 +20,25 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
     const [additionalCost, setAdditionalCost] = useState(0);
     const [additionalCostReason, setAdditionalCostReason] = useState('');
     const [loading, setLoading] = useState(false); // Add loading state
+    // Ref for the PDF content
+    const printableRef = useRef(null);
+    const [selectedQuote, setSelectedQuote] = useState(null);
+    
+    // Function to handle printing
+    const handlePrint = () => {
+        const printSection = printableRef.current;
+        const originalContent = document.body.innerHTML;
+
+        // Wrap the content inside a div with ID "print-section" for visibility control
+        document.body.innerHTML = `<div id="print-section">${printSection.innerHTML}</div>`;
+
+        // Trigger print
+        window.print();
+
+        // Restore the original content after printing
+        document.body.innerHTML = originalContent;
+        window.location.reload(); // Reload the page to restore the app's state
+    };
 
     // Helper function to calculate time difference and update total_cost
     const calculateTotalCost = (customer) => {
@@ -313,6 +332,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
         // Set the quote details
         setQuoteDetails(quote);
         setShowQuoteModal(true);
+        setSelectedQuote(quote);
     };
 
     // Modified payment confirmation handler
@@ -453,7 +473,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
                 return () => clearInterval(intervalId);
             }
         }
-        else{
+        else {
             if (!loading) { // Only refresh if not loading
                 const intervalId = setInterval(() => {
                     refreshTotalCost();
@@ -687,6 +707,16 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
                         </Button>
                         <Button variant="primary" onClick={handlePaymentConfirmation}>
                             تأكيد الدفع
+                        </Button>
+                        {selectedQuote ? (
+                                <div ref={printableRef} style={{ display: 'none' }}>
+                                    <QuotePDF quote={selectedQuote} />
+                                </div>
+                            ) : (
+                                <p>لا توجد تفاصيل للعرض</p>
+                            )}
+                        <Button variant="primary" onClick={handlePrint}>
+                            <FaPrint /> طباعة كـ PDF
                         </Button>
                     </Modal.Footer>
                 </Modal>

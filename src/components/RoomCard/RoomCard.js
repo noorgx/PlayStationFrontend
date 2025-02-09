@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Button, Row, Col, Modal, Badge, ProgressBar, Form } from 'react-bootstrap';
-import { 
-  FaPlay, FaStop, FaClock, FaDoorOpen, FaUser, 
-  FaUsers, FaInfoCircle, FaMoneyBillWave, FaCoins 
+import {
+    FaPlay, FaStop, FaClock, FaDoorOpen, FaUser,
+    FaUsers, FaInfoCircle, FaMoneyBillWave, FaCoins
 } from 'react-icons/fa';
 import MachineSelector from './MachineSelector';
 import TimerModal from './TimerModal';
@@ -232,42 +232,41 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
                 <Card.Body>
                     {/* Machine Image and Selector */}
                     <Row className="mb-4">
-                        <Col md={5} className="text-center mb-3 mb-md-0">
-                            {selectedMachine && (
-                                <img
-                                    src={selectedMachine.image_link || 'https://via.placeholder.com/200'}
-                                    alt={selectedMachine.machine_name}
-                                    className="img-fluid rounded-3 border"
-                                    style={{ maxHeight: '200px', objectFit: 'contain' }}
-                                />
-                            )}
-                        </Col>
-                        <Col md={7}>
-                            <MachineSelector
-                                machines={machines}
-                                selectedMachine={selectedMachine}
-                                handleMachineChange={handleMachineChange}
-                                disabled={startTime}
+
+                        {selectedMachine && (
+                            <img
+                                src={selectedMachine.image_link || 'https://dm0qx8t0i9gc9.cloudfront.net/thumbnails/video/rMadI-Zz9l0vd44f0/videoblocks-question-mark-symbol_hbcmmg3ea_thumbnail-1080_01.png'}
+                                alt={selectedMachine.machine_name}
+                                className="img-fluid rounded-3 border"
+                                style={{ maxHeight: '200px', objectFit: 'contain' }}
                             />
-                            {selectedMachine && (
-                                <div className="mt-3 p-3 bg-light rounded">
-                                    <h5 className="text-primary">
-                                        <FaMoneyBillWave className="me-2" />
-                                        الأسعار:
-                                    </h5>
-                                    <div className="d-flex justify-content-around">
-                                        <div>
-                                            <FaUser className="text-info me-2" />
-                                            فردي: {selectedMachine.price_per_hour_single} ر.س
-                                        </div>
-                                        <div>
-                                            <FaUsers className="text-success me-2" />
-                                            زوجي: {selectedMachine.price_per_hour_multi} ر.س
-                                        </div>
+                        )}
+
+                        <MachineSelector
+                            machines={machines}
+                            selectedMachine={selectedMachine}
+                            handleMachineChange={handleMachineChange}
+                            disabled={startTime}
+                        />
+                        {selectedMachine && (
+                            <div className="mt-3 p-3 bg-light rounded">
+                                <h5 className="text-primary">
+                                    <FaMoneyBillWave className="me-2" />
+                                    الأسعار:
+                                </h5>
+                                <div className="d-flex justify-content-around">
+                                    <div>
+                                        <FaUser className="text-info me-2" />
+                                        فردي: {selectedMachine.price_per_hour_single}
+                                    </div>
+                                    <div>
+                                        <FaUsers className="text-success me-2" />
+                                        زوجي: {selectedMachine.price_per_hour_multi}
                                     </div>
                                 </div>
-                            )}
-                        </Col>
+                            </div>
+                        )}
+
                     </Row>
 
                     {/* Mode Selection and Controls */}
@@ -297,17 +296,17 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
                             </Col>
                             <Col md={6}>
                                 <div className="d-grid gap-2">
-                                    <Button 
-                                        variant="outline-primary" 
-                                        onClick={handleOpen} 
+                                    <Button
+                                        variant="outline-primary"
+                                        onClick={handleOpen}
                                         disabled={isOpen}
                                         size="lg"
                                     >
                                         <FaDoorOpen className="me-2" />
-                                        {isOpen ? 'مفتوح حالياً' : 'فتح الوقت المفتوح'}
+                                        {isOpen ? 'Open' : 'Open'}
                                     </Button>
-                                    <Button 
-                                        variant="warning" 
+                                    <Button
+                                        variant="warning"
                                         onClick={handleTimer}
                                         size="lg"
                                     >
@@ -327,12 +326,6 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
                                 الوقت المتبقي
                             </h4>
                             <TimerDisplay timeLeft={timeLeft} />
-                            {totalCost > 0 && (
-                                <div className="mt-3 h5">
-                                    <FaCoins className="me-2 text-warning" />
-                                    الإجمالي: {totalCost} ر.س
-                                </div>
-                            )}
                         </div>
                     )}
 
@@ -340,8 +333,8 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
                     <Row className="g-3">
                         {!startTime ? (
                             <Col>
-                                <Button 
-                                    variant="success" 
+                                <Button
+                                    variant="success"
                                     onClick={handleStart}
                                     size="lg"
                                     className="w-100 py-3"
@@ -352,8 +345,8 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
                             </Col>
                         ) : (
                             <Col>
-                                <Button 
-                                    variant="info" 
+                                <Button
+                                    variant="info"
                                     onClick={() => setShowDetailsModal(true)}
                                     size="lg"
                                     className="w-100 py-3"
