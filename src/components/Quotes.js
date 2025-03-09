@@ -24,14 +24,18 @@ const Quotes = () => {
         food_drinks: [],
         date: ''
     });
+    console.log(currentQuote)
     const [selectedQuoteDetails, setSelectedQuoteDetails] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStartDate, setFilterStartDate] = useState('');
     const [filterEndDate, setFilterEndDate] = useState('');
+    const [filterDay, setFilterDay] = useState(''); // New state for day filter
     const [filterMonth, setFilterMonth] = useState('');
     const [filterYear, setFilterYear] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
+    const [filterDate, setFilterDate] = useState('');
+
     // Ref for the PDF content
     const printableRef = useRef(null);
     const [selectedQuote, setSelectedQuote] = useState(null);
@@ -112,12 +116,18 @@ const Quotes = () => {
 
 
 
+    const handleDateFilterChange = (e) => {
+        const date = e.target.value;
+        setFilterDate(date);
+        filterQuotes(date); // Add the filterDate
+    };
 
     // Fetch all quotes
     const fetchQuotes = async () => {
         try {
             const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/quotes');
             setQuotes(response.data);
+            console.log(response.data)
             setFilteredQuotes(response.data);
         } catch (error) {
             console.error('Error fetching quotes:', error);
@@ -182,82 +192,91 @@ const Quotes = () => {
         setEditMode(false);
         setShowModal(false);
     };
+    function formatAndFlipDateTime(dateTimeString) {
+        // Split the date and time
+        const [datePart, timePart] = dateTimeString.replace(/\//g, '-').split(' ');
 
-    // Handle search input change
-    const handleSearchChange = (e) => {
-        const term = e.target.value;
-        setSearchTerm(term);
-        filterQuotes(term, filterStartDate, filterEndDate, filterMonth, filterYear);
-        setCurrentPage(1);
-    };
+        // Split the date part by '-'
+        const [day, month, year] = datePart.split('-');
 
-    // Handle start date filter change
-    const handleStartDateFilterChange = (e) => {
-        const startDate = e.target.value;
-        setFilterStartDate(startDate);
-        filterQuotes(searchTerm, startDate, filterEndDate, filterMonth, filterYear);
-        setCurrentPage(1);
-    };
+        // Re-arrange to YYYY-MM-DD format
+        const flippedDatePart = `${year}-${month}-${day}`;
 
-    // Handle end date filter change
-    const handleEndDateFilterChange = (e) => {
-        const endDate = e.target.value;
-        setFilterEndDate(endDate);
-        filterQuotes(searchTerm, filterStartDate, endDate, filterMonth, filterYear);
-        setCurrentPage(1);
+        // Combine the flipped date with the time part
+        const flippedDateTimeString = `${flippedDatePart} ${timePart}`;
+
+        // Parse the modified date string into a Date object
+        const date = new Date(flippedDateTimeString);
+
+        // Format the date and time using 'en-GB' locale (DD/MM/YYYY HH:MM:SS)
+        const formattedDate = date.toLocaleDateString('en-GB'); // Format as DD/MM/YYYY
+
+        // Return the formatted date and time
+        return formattedDate;
+    }
+    function formatAndFlipDateTime_str(dateTimeString) {
+        // Split the date and time
+        const [datePart, timePart] = dateTimeString.replace(/\//g, '-').split(' ');
+
+        // Split the date part by '-'
+        const [day, month, year] = datePart.split('-');
+
+        // Re-arrange to YYYY-MM-DD format
+        const flippedDatePart = `${year}-${month}-${day}`;
+
+        // Combine the flipped date with the time part
+        const flippedDateTimeString = `${flippedDatePart} ${timePart}`;
+
+        // Parse the modified date string into a Date object
+        const date = new Date(flippedDateTimeString);
+
+        // Format the date and time using 'en-GB' locale (DD/MM/YYYY HH:MM:SS)
+        const formattedDate = date.toLocaleDateString('en-GB'); // Format as DD/MM/YYYY
+
+        // Return the formatted date and time
+        return flippedDateTimeString;
+    }
+
+    // Handle day filter change
+    const handleDayFilterChange = (e) => {
+        const day = e.target.value;
+        setFilterDay(day);
+        filterQuotes(filterDay, filterMonth, filterYear);
     };
 
     // Handle month filter change
     const handleMonthFilterChange = (e) => {
         const month = e.target.value;
         setFilterMonth(month);
-        filterQuotes(searchTerm, filterStartDate, filterEndDate, month, filterYear);
-        setCurrentPage(1);
+        filterQuotes(filterDay, filterMonth, filterYear);
     };
 
     // Handle year filter change
     const handleYearFilterChange = (e) => {
         const year = e.target.value;
         setFilterYear(year);
-        filterQuotes(searchTerm, filterStartDate, filterEndDate, filterMonth, year);
-        setCurrentPage(1);
+        filterQuotes(filterDay, filterMonth, filterYear);
     };
 
-    // Filter quotes based on search term, date interval, month, and year
-    const filterQuotes = (term, startDate, endDate, month, year) => {
+    // Filter quotes based on search term, date interval, day, month, and year
+    const filterQuotes = (selectedDate) => {
         let filtered = quotes;
 
-        if (term) {
-            filtered = filtered.filter((quote) =>
-                quote.quote_details.toLowerCase().includes(term.toLowerCase())
-            );
-        }
 
-        if (startDate && endDate) {
+        if (selectedDate) {
             filtered = filtered.filter((quote) => {
-                const quoteDate = new Date(quote.date);
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-                return quoteDate >= start && quoteDate <= end;
-            });
-        }
+                // console.log(new Date(selectedDate).toLocaleDateString('en-GB'))
 
-        if (month) {
-            filtered = filtered.filter((quote) => {
-                const quoteMonth = new Date(quote.date).getMonth() + 1;
-                return quoteMonth === parseInt(month, 10);
-            });
-        }
+                const quoteDate = formatAndFlipDateTime(quote.date);
 
-        if (year) {
-            filtered = filtered.filter((quote) => {
-                const quoteYear = new Date(quote.date).getFullYear();
-                return quoteYear === parseInt(year, 10);
+                // console.log(formatAndFlipDateTime(quote.date))
+                return quoteDate === new Date(selectedDate).toLocaleDateString('en-GB');
             });
         }
 
         setFilteredQuotes(filtered);
     };
+
 
     // Handle "Show Details" button click
     const handleShowDetails = (quote) => {
@@ -266,15 +285,6 @@ const Quotes = () => {
         setShowDetailsModal(true);
     };
 
-
-    // Pagination logic
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentQuotes = filteredQuotes.slice(indexOfFirstItem, indexOfLastItem);
-
-    // Change page
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
     // Fetch quotes on component mount
     useEffect(() => {
         fetchQuotes();
@@ -282,10 +292,10 @@ const Quotes = () => {
 
     return (
         <div dir="rtl">
-            <Container fluid className="my-4">
+            <Container fluid className="my-4" dir="rtl">
                 {/* Modal Form */}
-                <Modal show={showModal} onHide={resetForm} centered>
-                    <Modal.Header closeButton>
+                <Modal show={showModal} onHide={resetForm} centered dir="rtl">
+                    <Modal.Header closeButton >
                         <Modal.Title>{editMode ? 'تعديل الفاتورة' : 'إضافة فاتورة'}</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
@@ -400,23 +410,32 @@ const Quotes = () => {
                             </Row>
 
                             <Form.Group className="mb-3">
-                                <Form.Label>السجلات (مفصولة بفواصل)</Form.Label>
-                                <Form.Control
-                                    as="textarea"
-                                    name="logs"
-                                    value={currentQuote.logs.join(',')}
-                                    onChange={handleInputChange}
-                                />
+                                <Form.Label>السجلات:</Form.Label>
+                                <ul>
+                                    {currentQuote.logs?.map((log, index) => (
+                                        <li key={index}>
+                                            <strong>السجل #{log.log_number}:</strong> {log.new_mode} (السابق: {log.old_mode})<br />
+                                            <strong>وقت البدء السابق:</strong> {log.old_start_time}<br />
+                                            <strong>التكلفة:</strong> {log.time_cost}<br />
+                                            <strong>الوقت المستغرق:</strong> {log.time_spent_hours} ساعات و {log.time_spent_minutes} دقائق<br />
+                                            <strong>الوقت:</strong> {log.timestamp}
+                                        </li>
+                                    ))}
+                                </ul>
                             </Form.Group>
 
                             <Form.Group className="mb-3">
-                                <Form.Label>الأطعمة/المشروبات (مفصولة بفواصل)</Form.Label>
-                                <Form.Control
-                                    as="textarea"
-                                    name="food_drinks"
-                                    value={currentQuote.food_drinks.join(',')}
-                                    onChange={handleInputChange}
-                                />
+                                <Form.Label>الأطعمة/المشروبات :</Form.Label>
+                                <ul>
+                                    {currentQuote.food_drinks?.map((item, index) => (
+                                        <li key={index}>
+                                            <strong>المنتج:</strong> {item.item_name} <br />
+                                            <strong>الكمية:</strong> {item.quantity} <br />
+                                            <strong>السعر:</strong> {item.price} <br />
+                                            <strong>التكلفة الإجمالية:</strong> {(item.price * item.quantity).toFixed(2)}
+                                        </li>
+                                    ))}
+                                </ul>
                             </Form.Group>
 
                             <Button variant="primary" type="submit">
@@ -425,6 +444,19 @@ const Quotes = () => {
                         </Form>
                     </Modal.Body>
                 </Modal>
+                <Row className="mb-3">
+                    <Col xs={12} sm={6} md={4} lg={3}>
+                        <Form.Group controlId="filterDate">
+                            <Form.Label>فلترة حسب التاريخ</Form.Label>
+                            <Form.Control
+                                type="date"
+                                value={filterDate}
+                                onChange={handleDateFilterChange}
+                            />
+                        </Form.Group>
+                    </Col>
+                </Row>
+
 
                 {/* Updated Table Structure */}
                 <Table striped bordered hover>
@@ -440,14 +472,14 @@ const Quotes = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {currentQuotes.map((quote, index) => (
+                        {filteredQuotes.map((quote, index) => (
                             <tr key={quote.id}>
-                                <td>{indexOfFirstItem + index + 1}</td>
+                                <td>{index + 1}</td>
                                 <td>{quote.user_name}</td>
                                 <td>{quote.machine_name}</td>
                                 <td>{quote.room}</td>
                                 <td>{quote.total_cost}</td>
-                                <td>{new Date(quote.date).toLocaleDateString()}</td>
+                                <td>{formatAndFlipDateTime(quote.date)}</td>
                                 <td>
                                     <Button variant="warning" size="sm" onClick={() => handleEdit(quote)} className="me-2">
                                         <FaEdit /> تعديل

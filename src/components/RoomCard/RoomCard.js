@@ -87,6 +87,7 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
                         }
                     }
                 } else {
+                    localStorage.setItem(`${room}-hasPlayedNotification`, 'true'); // Mark notification as played
                     const timeElapsed = now - startTime;
                     setTimeLeft(timeElapsed);
                 }
@@ -117,7 +118,6 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
         setIsTimer(false);
         setIsOpen(true);
         setEndTime(null);
-        alert('الوقت Open');
     };
 
     const handleTimer = () => {
@@ -128,17 +128,14 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
 
     const handleSingle = () => {
         setMode('Single');
-        alert('تم اختيار وضع الفردي');
     };
 
     const handleMulti = () => {
         setMode('Multi');
-        alert('تم اختيار وضع الزوجي');
     };
 
     const handleStart = async () => {
         if (!selectedMachine || !mode || (!isOpen && !isTimer)) {
-            alert('يرجى ملء جميع الحقول المطلوبة');
             return;
         }
 
@@ -186,7 +183,6 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
                 window.location.reload();
             }
         } catch (error) {
-            alert('حدث خطأ أثناء إرسال بيانات الغرفة.');
         }
     };
 

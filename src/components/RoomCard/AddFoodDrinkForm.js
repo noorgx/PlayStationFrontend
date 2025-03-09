@@ -47,7 +47,6 @@ const AddFoodDrinkForm = ({ show, handleClose, handleSubmit }) => {
     const handleQuantityChange = (e) => {
         const newQuantity = parseInt(e.target.value, 10);
         if (newQuantity > selectedItem.maxQuantity) {
-            alert(`الكمية لا يمكن أن تتجاوز ${selectedItem.maxQuantity}`);
             setSelectedItem({
                 ...selectedItem,
                 quantity: selectedItem.maxQuantity,
@@ -62,7 +61,6 @@ const AddFoodDrinkForm = ({ show, handleClose, handleSubmit }) => {
 
     const handleFormSubmit = () => {
         if (selectedItem.quantity > selectedItem.maxQuantity) {
-            alert(`الكمية لا يمكن أن تتجاوز ${selectedItem.maxQuantity}`);
             return;
         }
         handleSubmit(selectedItem); 

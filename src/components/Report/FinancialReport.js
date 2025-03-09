@@ -21,7 +21,28 @@ const FinancialReport = ({ filteredQuotes, filteredPayments, netTotal, totalFood
 
         return grouped;
     };
-
+    function formatAndFlipDateTime(dateTimeString) {
+        // Split the date and time
+        const [datePart, timePart] = dateTimeString.replace(/\//g, '-').split(' ');
+    
+        // Split the date part by '-'
+        const [day, month, year] = datePart.split('-');
+    
+        // Re-arrange to YYYY-MM-DD format
+        const flippedDatePart = `${year}-${month}-${day}`;
+    
+        // Combine the flipped date with the time part
+        const flippedDateTimeString = `${flippedDatePart} ${timePart}`;
+    
+        // Parse the modified date string into a Date object
+        const date = new Date(flippedDateTimeString);
+    
+        // Format the date and time using 'en-GB' locale (DD/MM/YYYY HH:MM:SS)
+        const formattedDate = date.toLocaleString('en-GB'); // Format as DD/MM/YYYY
+    
+        // Return the formatted date and time
+        return formattedDate; 
+    }
     // Group payments by type for yearly report
     const groupedPayments = reportType === 'yearly' ? groupPaymentsByType(filteredPayments) : null;
 
@@ -59,7 +80,7 @@ const FinancialReport = ({ filteredQuotes, filteredPayments, netTotal, totalFood
                                 <td className="text-success">+{q.total_cost}</td>
                                 <td>
                                     <FontAwesomeIcon icon={faCalendar} className="me-2" />
-                                    {new Date(q.date).toLocaleString('ar')}
+                                    {formatAndFlipDateTime(q.date)}
                                 </td>
                             </tr>
                         ))}
@@ -75,26 +96,26 @@ const FinancialReport = ({ filteredQuotes, filteredPayments, netTotal, totalFood
                                 <td className="text-danger">-{p.cost}</td>
                                 <td>
                                     <FontAwesomeIcon icon={faCalendar} className="me-2" />
-                                    {new Date(p.date).toLocaleString('ar')}
+                                    {p.date}
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                     <tfoot className="bg-light">
                         <tr>
-                            <td colSpan="4" className="text-end"><strong>صافي الإجمالي:</strong></td>
+                            <td colSpan="4" className="text-end"><strong> الإجمالي:</strong></td>
                             <td className={netTotal >= 0 ? 'text-success' : 'text-danger'}>
                                 <strong>{netTotal.toFixed(2)}</strong>
                             </td>
                             <td></td>
                         </tr>
-                        <tr>
+                        {/* <tr>
                             <td colSpan="4" className="text-end"><strong>إجمالي الربح من المأكولات والمشروبات:</strong></td>
                             <td className="text-success"><strong>{totalFoodDrinksProfit.toFixed(2)}</strong></td>
                             <td></td>
-                        </tr>
+                        </tr> */}
                         <tr>
-                            <td colSpan="4" className="text-end"><strong>الإجمالي الكلي:</strong></td>
+                            <td colSpan="4" className="text-end"><strong>صافي الربح:</strong></td>
                             <td className="text-success"><strong>{(netTotal + totalFoodDrinksProfit).toFixed(2)}</strong></td>
                             <td></td>
                         </tr>

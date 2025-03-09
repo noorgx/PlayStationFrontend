@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Badge, ButtonGroup, Button } from 'react-bootstrap';
-import { FaFileInvoiceDollar, FaCalendarAlt, FaUtensils, FaMoneyBillWave, FaChartBar } from 'react-icons/fa';
+import { FaFileInvoiceDollar, FaCalendarAlt, FaUtensils, FaMoneyBillWave, FaChartBar, FaList } from 'react-icons/fa';
 import axios from 'axios';
 import ReportTypeSelector from './ReportTypeSelector';
 import DateSelector from './DateSelector';
@@ -24,6 +24,7 @@ const Reports = () => {
     const [startHour, setStartHour] = useState('');
     const [endHour, setEndHour] = useState('');
     const [showFinancial, setShowFinancial] = useState(true);
+    const [showSalesSummary, setShowSalesSummary] = useState(false); // Add state for 'الكمية مباعة'
 
     const fetchData = async () => {
         try {
@@ -60,10 +61,10 @@ const Reports = () => {
 
     const calculateYearlyExpenses = (filteredPayments) => {
         return filteredPayments.reduce((sum, p) => {
-            const paymentDate = new Date(p.date);
+            const paymentDate = new Date(p.date).toLocaleDateString('en-GB');
             const year = selectedYear ? parseInt(selectedYear) : new Date().getFullYear();
 
-            if (p.type === 'once' && paymentDate.getFullYear() === year) {
+            if (p.type === 'one-time' && new Date(p.date).getFullYear() === year) {
                 return sum + parseFloat(p.cost || 0);
             }
 
@@ -83,23 +84,81 @@ const Reports = () => {
             return sum;
         }, 0);
     };
+    function getDayFromDate(dateTimeString) {
+        const [datePart] = dateTimeString.split(' ');
+        const [day] = datePart.split('/');
+        return parseInt(day, 10);
+    }
+    function getMonthFromDate(dateTimeString) {
+        const [datePart] = dateTimeString.split(' ');
+        const [, month] = datePart.split('/');
+        return parseInt(month, 10);
+    }
+    function getYearFromDate(dateTimeString) {
+        const [datePart] = dateTimeString.split(' ');
+        const [, , year] = datePart.split('/');
+        return parseInt(year, 10);
+    }
 
+    function formatAndFlipDateTime(dateTimeString) {
+        // Split the date and time
+        const [datePart, timePart] = dateTimeString.replace(/\//g, '-').split(' ');
+
+        // Split the date part by '-'
+        const [day, month, year] = datePart.split('-');
+
+        // Re-arrange to YYYY-MM-DD format
+        const flippedDatePart = `${year}-${month}-${day}`;
+
+        // Combine the flipped date with the time part
+        const flippedDateTimeString = `${flippedDatePart} ${timePart}`;
+
+        // Parse the modified date string into a Date object
+        const date = new Date(flippedDateTimeString);
+
+        // Format the date and time using 'en-GB' locale (DD/MM/YYYY HH:MM:SS)
+        const formattedDate = date.toLocaleDateString('en-GB'); // Format as DD/MM/YYYY
+
+        // Return the formatted date and time
+        return formattedDate;
+    }
+    function formatAndFlipDateTime_toLocaleString(dateTimeString) {
+        // Split the date and time
+        const [datePart, timePart] = dateTimeString.replace(/\//g, '-').split(' ');
+
+        // Split the date part by '-'
+        const [day, month, year] = datePart.split('-');
+
+        // Re-arrange to YYYY-MM-DD format
+        const flippedDatePart = `${year}-${month}-${day}`;
+
+        // Combine the flipped date with the time part
+        const flippedDateTimeString = `${flippedDatePart} ${timePart}`;
+
+        // Parse the modified date string into a Date object
+        const date = new Date(flippedDateTimeString);
+
+        // Format the date and time using 'en-GB' locale (DD/MM/YYYY HH:MM:SS)
+        const formattedDate = date.toLocaleString('en-GB'); // Format as DD/MM/YYYY
+
+        // Return the formatted date and time
+        return formattedDate;
+    }
     const filterData = () => {
         let filteredQ = quotes;
         let filteredP = payments;
-
+        console.log(filteredP)
         filteredP = payments.filter(p => {
-            const paymentDate = new Date(p.date);
+            const paymentDate = new Date(p.date).toLocaleDateString('en-GB');
             const year = selectedYear ? parseInt(selectedYear) : new Date().getFullYear();
-
-            if (p.type === 'once') {
+            if (p.type === 'one-time') {
                 switch (reportType) {
                     case 'daily':
-                        return paymentDate.toLocaleDateString() === new Date(selectedDate).toLocaleDateString();
+                        return paymentDate === new Date(selectedDate).toLocaleDateString('en-GB');
                     case 'monthly':
-                        return paymentDate.getMonth() + 1 === parseInt(selectedMonth);
+                        return new Date(p.date).getMonth()+1 === parseInt(selectedMonth);
                     case 'yearly':
-                        return paymentDate.getFullYear() === year;
+                        return new Date(p.date).getFullYear() === year;
                     default:
                         return true;
                 }
@@ -110,45 +169,38 @@ const Reports = () => {
         switch (reportType) {
             case 'daily':
                 filteredQ = quotes.filter(q =>
-                    new Date(q.date).toLocaleDateString() === new Date(selectedDate).toLocaleDateString()
+                    formatAndFlipDateTime(q.date) === new Date(selectedDate).toLocaleDateString('en-GB')
                 );
                 break;
             case 'monthly':
                 filteredQ = quotes.filter(q =>
-                    new Date(q.date).getMonth() + 1 === parseInt(selectedMonth) &&
-                    new Date(q.date).getFullYear() === (selectedYear ? parseInt(selectedYear) : new Date().getFullYear())
+                    getMonthFromDate(formatAndFlipDateTime(q.date)) === parseInt(selectedMonth) &&
+                    getYearFromDate(formatAndFlipDateTime(q.date)) === (selectedYear ? parseInt(selectedYear) : new Date().getFullYear())
                 );
                 break;
             case 'yearly':
                 filteredQ = quotes.filter(q =>
-                    new Date(q.date).getFullYear() === parseInt(selectedYear)
+                    getYearFromDate(formatAndFlipDateTime(q.date)) === parseInt(selectedYear)
                 );
                 break;
             case 'machine':
                 filteredQ = quotes.filter(q => {
                     if (q.machine_name !== selectedMachine) return false;
-                    const quoteDate = new Date(q.date);
+                    const quoteDate = formatAndFlipDateTime(q.date);
                     if (selectedDate) {
-                        return quoteDate.toLocaleDateString() === new Date(selectedDate).toLocaleDateString();
+                        return quoteDate === new Date(selectedDate).toLocaleDateString('en-GB');
                     }
                     if (selectedMonth) {
-                        const monthMatch = quoteDate.getMonth() + 1 === parseInt(selectedMonth);
-                        const yearMatch = selectedYear ? quoteDate.getFullYear() === parseInt(selectedYear) : true;
+                        const monthMatch = getMonthFromDate(quoteDate) === parseInt(selectedMonth);
+                        const yearMatch = selectedYear ? getYearFromDate(quoteDate) === parseInt(selectedYear) : true;
                         return monthMatch && yearMatch;
                     }
                     if (selectedYear) {
-                        return quoteDate.getFullYear() === parseInt(selectedYear);
+                        return getYearFromDate(quoteDate) === parseInt(selectedYear);
                     }
                     return true;
                 });
                 break;
-        }
-
-        if (startHour && endHour && ['daily', 'monthly', 'yearly'].includes(reportType)) {
-            filteredQ = filteredQ.filter(q => {
-                const quoteHour = new Date(q.date).getHours();
-                return quoteHour >= parseInt(startHour) && quoteHour < parseInt(endHour);
-            });
         }
 
         setFilteredQuotes(filteredQ);
@@ -248,24 +300,18 @@ const Reports = () => {
                     )}
                 </Row>
 
-                {['daily', 'monthly', 'yearly'].includes(reportType) && (
-                    <HourSelector
-                        startHour={startHour}
-                        setStartHour={setStartHour}
-                        endHour={endHour}
-                        setEndHour={setEndHour}
-                    />
-                )}
-
                 {/* Toggle Button to Switch Between Reports */}
                 <Row className="mb-4">
                     <Col>
                         <ButtonGroup aria-label="Report toggle">
                             <Button variant={showFinancial ? "primary" : "outline-primary"} onClick={() => setShowFinancial(true)}>
-                                <FaMoneyBillWave className="me-2" />التقارير المالية
+                                <FaMoneyBillWave className="me-2" /> التقارير المالية
                             </Button>
-                            <Button variant={!showFinancial ? "primary" : "outline-primary"} onClick={() => setShowFinancial(false)}>
-                                <FaUtensils className="me-2" />مأكولات ومشروبات
+                            <Button variant={!showFinancial && !showSalesSummary ? "primary" : "outline-primary"} onClick={() => { setShowFinancial(false); setShowSalesSummary(false); }}>
+                                <FaUtensils className="me-2" /> مأكولات ومشروبات
+                            </Button>
+                            <Button variant={showSalesSummary && !showFinancial ? "primary" : "outline-primary"} onClick={() => { setShowFinancial(false); setShowSalesSummary(true); }}>
+                                <FaList className="me-2" /> الكمية مباعة
                             </Button>
                         </ButtonGroup>
                     </Col>
@@ -278,6 +324,52 @@ const Reports = () => {
                         netTotal={netTotal}
                         totalFoodDrinksProfit={totalFoodDrinksProfit}
                     />
+                ) : showSalesSummary ? (
+                    <Row className="mt-4">
+                        <Col>
+                            <Card>
+                                <Card.Header>
+                                    <FaList className="me-2" />
+                                    الكمية مباعة
+                                </Card.Header>
+                                <Card.Body>
+                                    {filteredQuotes.length > 0 ? (
+                                        <Table striped bordered hover responsive>
+                                            <thead>
+                                                <tr>
+                                                    <th>اسم العنصر</th>
+                                                    <th>الكمية الإجمالية المباعة</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {/* Aggregate the quantity sold per item, excluding items with empty names */}
+                                                {Object.entries(
+                                                    filteredQuotes.reduce((acc, quote) => {
+                                                        quote.food_drinks?.forEach(item => {
+                                                            if (item.item_name && item.item_name.trim() !== '') {
+                                                                if (!acc[item.item_name]) {
+                                                                    acc[item.item_name] = 0;
+                                                                }
+                                                                acc[item.item_name] += item.quantity;
+                                                            }
+                                                        });
+                                                        return acc;
+                                                    }, {})
+                                                ).map(([itemName, totalQuantity], index) => (
+                                                    <tr key={index}>
+                                                        <td>{itemName}</td>
+                                                        <td>{totalQuantity}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </Table>
+                                    ) : (
+                                        <p className="text-muted text-center">لا توجد بيانات مبيعات للفترة المحددة</p>
+                                    )}
+                                </Card.Body>
+                            </Card>
+                        </Col>
+                    </Row>
                 ) : (
                     <Row className="mt-4">
                         <Col>
@@ -301,18 +393,18 @@ const Reports = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {filteredQuotes.map(quote => 
+                                                {filteredQuotes.map(quote =>
                                                     quote.food_drinks?.map((item, index) => {
                                                         const foodItem = foodDrinks.find(fd => fd.item_name === item.item_name);
                                                         if (!foodItem) return null;
-                                                        
+
                                                         const totalSale = item.quantity * foodItem.total_price;
                                                         const totalCost = item.quantity * foodItem.price;
-                                                        const profit = totalCost - totalSale;
+                                                        const profit = totalSale - totalCost;
 
                                                         return (
                                                             <tr key={`${quote._id}-${index}`}>
-                                                                <td>{new Date(quote.date).toLocaleDateString()}</td>
+                                                                <td>{formatAndFlipDateTime(quote.date)}</td>
                                                                 <td>{item.item_name}</td>
                                                                 <td>{item.quantity}</td>
                                                                 <td>{foodItem.price} </td>

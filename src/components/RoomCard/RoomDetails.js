@@ -5,6 +5,7 @@ import axios from 'axios';
 import AddFoodDrinkForm from './AddFoodDrinkForm';
 import ChangeModeModal from './ChangeModeModal';
 import QuotePDF from '../Quotes/QuotePDF';
+import TimerModal from './TimerModalAdd';
 const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer }) => {
     const [customer, setCustomer] = useState(initialCustomer);
     const [initialStartTime, setInitialStartTime] = useState(initialCustomer.start_time); // Track initial start time
@@ -14,6 +15,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
     const [showQuoteModal, setShowQuoteModal] = useState(false);
     const [quoteDetails, setQuoteDetails] = useState(null);
     const [sessionEndedTrigger, setSessionEndedTrigger] = useState({});
+    const [isDisabled, setIsDisabled] = useState(false);
     // Add new state for discount and additional cost
     const [manualDiscount, setManualDiscount] = useState(0);
     const [discountReason, setDiscountReason] = useState('');
@@ -23,7 +25,9 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
     // Ref for the PDF content
     const printableRef = useRef(null);
     const [selectedQuote, setSelectedQuote] = useState(null);
-    
+    const [showTimerModal, setShowTimerModal] = useState(false);
+    const [hours, setHours] = useState(0);
+    const [minutes, setMinutes] = useState(0);
     // Function to handle printing
     const handlePrint = () => {
         const printSection = printableRef.current;
@@ -183,9 +187,42 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             setLoading(false); // End loading
         }
     };
+    const handleTimerSubmit = async () => {
+        try {
+            // Get current end_time as a Date object
+            const currentEndTime = new Date(customer.end_time);
 
+            // Add the input hours and minutes to the current end_time
+            const newEndTime = new Date(currentEndTime);
+            newEndTime.setHours(currentEndTime.getHours() + hours);
+            newEndTime.setMinutes(currentEndTime.getMinutes() + minutes);
+
+            // Create an updated customer object
+            const updatedCustomer = {
+                ...customer,
+                end_time: newEndTime.toISOString(), // Store the new end_time as ISO string to keep format consistent
+            };
+
+            // Send the updated customer data to the server via PUT request
+            await axios.put(
+                `https://playstationbackend.netlify.app/.netlify/functions/server/customers/${updatedCustomer.id}`,
+                updatedCustomer
+            );
+
+            // If successful, update the local customer state with the new end_time
+            setCustomer(updatedCustomer);
+            updateCustomer(updatedCustomer);
+            // Close the modal after successful submission
+            setShowTimerModal(false);
+
+            console.log('Customer time updated successfully');
+        } catch (error) {
+            console.error('Error updating customer time:', error);
+            // You could also add error handling logic here, such as showing a message to the user
+        }
+    };
     // Handle changing the mode and price per hour
-    const handleChangeMode = async (oldMode, newMode, oldPricePerHour, newPricePerHour) => {
+    const handleChangeMode = async (oldMode, newMode, oldPricePerHour, newPricePerHour, newMachine, newRoom) => {
         setLoading(true); // Start loading
         try {
             const updatedCustomer = { ...customer };
@@ -205,12 +242,16 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             // Add the time cost to the total cost
             updatedCustomer.total_cost += timeCost;
 
-            // Create a log entry for the mode change
+            // Create a log entry for the mode, machine, and room change
             const logEntry = {
                 old_mode: oldMode,
                 new_mode: newMode,
                 old_price_per_hour: oldPricePerHour,
                 new_price_per_hour: newPricePerHour,
+                old_machine: updatedCustomer.current_machine.machine_name,
+                new_machine: newMachine,
+                old_room: updatedCustomer.current_machine.room,
+                new_room: newRoom,
                 old_start_time: updatedCustomer.start_time,
                 time_spent_hours: timeSpentHours,
                 time_spent_minutes: timeSpentMinutes,
@@ -228,8 +269,11 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             // Update the last_time_check to the current time
             updatedCustomer.last_time_check = new Date().toISOString();
 
-            // Update the mode and price_per_hour
+            // Update the mode, machine, room, and price_per_hour
             updatedCustomer.current_machine.multi_single = newMode;
+            console.log(newMachine)
+            updatedCustomer.current_machine.machine_name = newMachine;
+            updatedCustomer.current_machine.room = newRoom;
             updatedCustomer.price_per_hour = parseFloat(newPricePerHour) - ((updatedCustomer.current_machine.discount / 100) * parseFloat(newPricePerHour));
 
             // Update the customer on the server
@@ -249,6 +293,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             setLoading(false); // End loading
         }
     };
+
 
     // Function to handle canceling the session
     const handleCancelSession = async () => {
@@ -275,7 +320,6 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
         const currentTime = new Date().getTime();
 
         if (initialCustomer.end_time <= currentTime) {
-            alert('من فضلك تأكد من أن الجلسة انتهت');
             return; // Exit the function early
         }
 
@@ -295,8 +339,8 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             time_spent_hours: log.time_spent_hours,
             time_spent_minutes: log.time_spent_minutes,
             time_cost: log.time_cost.toFixed(2),
-            old_start_time: new Date(log.old_start_time).toLocaleString(),
-            timestamp: new Date(log.timestamp).toLocaleString(),
+            old_start_time: new Date(log.old_start_time).toLocaleString('en-GB'),
+            timestamp: new Date(log.timestamp).toLocaleString('en-GB'),
         }));
 
         // Format foods and drinks
@@ -313,14 +357,14 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             user_name: JSON.parse(localStorage.getItem('user')).name,
             machine_name: customer.current_machine.machine_name,
             room: customer.current_machine.room,
-            start_time: new Date(customer.start_time).toLocaleString(),
-            end_time: customer.end_time ? new Date(customer.end_time).toLocaleString() : 'لم ينته بعد',
+            start_time: new Date(customer.start_time).toLocaleString('en-GB'),
+            end_time: customer.end_time ? new Date(customer.end_time).toLocaleString('en-GB') : 'لم ينته بعد',
             total_cost: customer.total_cost.toFixed(2), // Total cost (foods/drinks + machine usage)
             foods_drinks_cost: foodsDrinksCost.toFixed(2), // Total cost for foods/drinks
             machine_usage_cost: machineUsageCost.toFixed(2), // Total cost for machine usage
             logs: logsDetails,
             food_drinks: foodDrinksDetails,
-            date: new Date().toLocaleString(),
+            date: new Date().toLocaleString('en-GB'),
             baseTotal: baseTotal,
             manualDiscount: 0,
             discountReason: '',
@@ -431,6 +475,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
 
             // Refresh the customer list to reflect the changes
             fetchCustomers();
+            setIsDisabled(true);
         } catch (error) {
             console.error('Error ending session:', error);
         } finally {
@@ -483,6 +528,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             }
         }
     }, [customer, loading]); // Re-run effect if customer or loading changes
+
     // Render the component
     if (!customer) {
         return <p>لا توجد بيانات للعميل.</p>;
@@ -507,10 +553,10 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
                             <strong>الوضع:</strong> {customer.current_machine.multi_single}
                         </ListGroup.Item>
                         <ListGroup.Item>
-                            <strong>وقت البداية:</strong> {new Date(customer.start_time).toLocaleString()}
+                            <strong>وقت البداية:</strong> {new Date(customer.start_time).toLocaleString('en-GB')}
                         </ListGroup.Item>
                         <ListGroup.Item>
-                            <strong>وقت النهاية:</strong> {customer.end_time ? new Date(customer.end_time).toLocaleString() : 'لم ينته بعد'}
+                            <strong>وقت النهاية:</strong> {customer.end_time ? new Date(customer.end_time).toLocaleString('en-GB') : 'لم ينته بعد'}
                         </ListGroup.Item>
                         <ListGroup.Item>
                             <strong>إجمالي التكلفة:</strong> {customer.total_cost.toFixed(2)}
@@ -518,9 +564,9 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
                         <ListGroup.Item>
                             <strong>السعر لكل ساعة:</strong> {customer.price_per_hour}
                         </ListGroup.Item>
-                        <ListGroup.Item>
+                        {/* <ListGroup.Item>
                             <strong>المدة:</strong> {customer.duration_hours} ساعات {customer.duration_minutes} دقائق
-                        </ListGroup.Item>
+                        </ListGroup.Item> */}
                         <ListGroup.Item>
                             <strong>حالة الغرفة:</strong> {customer.is_open_time ? 'Open' : 'مؤقت'}
                         </ListGroup.Item>
@@ -551,14 +597,14 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
                                         const timeSpent = `${log.time_spent_hours} ساعات ${log.time_spent_minutes} دقائق`;
 
                                         // تنسيق وقت البداية القديم
-                                        const oldStartTime = new Date(log.old_start_time).toLocaleString();
+                                        const oldStartTime = new Date(log.old_start_time).toLocaleString('en-GB');
 
                                         // تنسيق تكلفة الوقت المنقضي
                                         const timeCost = `${log.time_cost.toFixed(2)}`;
 
                                         return (
                                             <li key={index}>
-                                                <strong>السجل {index + 1}:</strong> تم تغيير الوضع من "{log.old_mode}" إلى "{log.new_mode}" <br />(الوقت المنقضي: {timeSpent}, التكلفة: {timeCost}) <br /> من {oldStartTime} إلى {new Date(log.timestamp).toLocaleString()}
+                                                <strong>السجل {index + 1}:</strong> تم تغيير الوضع من "{log.old_mode}" إلى "{log.new_mode}" <br />(الوقت المنقضي: {timeSpent}, التكلفة: {timeCost}) <br /> من {oldStartTime} إلى {new Date(log.timestamp).toLocaleString('en-GB')}
                                             </li>
                                         );
                                     })}
@@ -570,13 +616,26 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
                     {/* الأزرار في المنتصف */}
                     <Row className="mt-4 justify-content-center">
                         <Col xs={12} md={6} className="d-flex flex-wrap justify-content-center gap-2">
+                            <Button onClick={() => setShowTimerModal(true)}>
+                                تعديل الوقت
+                            </Button>
+
+                            <TimerModal
+                                show={showTimerModal}
+                                onHide={() => setShowTimerModal(false)}
+                                handleTimerSubmit={handleTimerSubmit}
+                                hours={hours}
+                                setHours={setHours}
+                                minutes={minutes}
+                                setMinutes={setMinutes}
+                            />
                             <Button variant="primary" onClick={() => setShowForm(true)}>
                                 <FaUtensils className="me-2" /> إضافة طعام/شراب
                             </Button>
                             <Button variant="secondary" onClick={() => setShowModeModal(true)}>
                                 <FaGamepad className="me-2" /> تغيير الوضع
                             </Button>
-                            <Button variant="info" onClick={refreshTotalCost}>
+                            <Button variant="info" onClick={refreshTotalCost} disabled={isDisabled}>
                                 <FaSyncAlt className="me-2" /> تحديث التكلفة
                             </Button>
                             <Button variant="warning" onClick={handleEndSession}>
@@ -606,6 +665,8 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             <ChangeModeModal
                 show={showModeModal}
                 handleClose={() => setShowModeModal(false)}
+                currentMachine={customer.current_machine.machine_name}
+                currentRoom={customer.current_machine.room}
                 currentMode={customer.current_machine.multi_single}
                 pricePerHourSingle={customer.current_machine.price_per_hour_single}
                 pricePerHourMulti={customer.current_machine.price_per_hour_multi}
@@ -709,12 +770,12 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
                             تأكيد الدفع
                         </Button>
                         {selectedQuote ? (
-                                <div ref={printableRef} style={{ display: 'none' }}>
-                                    <QuotePDF quote={selectedQuote} />
-                                </div>
-                            ) : (
-                                <p>لا توجد تفاصيل للعرض</p>
-                            )}
+                            <div ref={printableRef} style={{ display: 'none' }}>
+                                <QuotePDF quote={selectedQuote} />
+                            </div>
+                        ) : (
+                            <p>لا توجد تفاصيل للعرض</p>
+                        )}
                         <Button variant="primary" onClick={handlePrint}>
                             <FaPrint /> طباعة كـ PDF
                         </Button>

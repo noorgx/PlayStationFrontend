@@ -51,7 +51,6 @@ const Customers = () => {
 
         // Check if the session ended trigger is true for this customer
         if (!sessionEndedTrigger[customer.id]) {
-            alert('Please confirm that the session has ended.');
             return; // Exit the function early
         }
 
@@ -61,7 +60,7 @@ const Customers = () => {
                 `Log ${index + 1}: Machine ${log.machine_name} (${log.machine_type}), ` +
                 `Time Spent: ${(log.time_spent * 60).toFixed(2)} minutes, ` +
                 `Price Type: ${log.price_type}, ` +
-                `Timestamp: ${new Date(log.timestamp).toLocaleString()}`
+                `Timestamp: ${new Date(log.timestamp).toLocaleString('en-GB')}`
             ))
             .join('\n');
 
@@ -83,7 +82,7 @@ const Customers = () => {
                 `Foods/Drinks:\n${foodDrinksDetails}`
             ),
             cost: customer.total_cost,
-            date: new Date().toLocaleDateString(),
+            date: new Date().toLocaleDateString('en-GB'),
         };
 
         setQuoteDetails(quote);
@@ -502,8 +501,8 @@ const Customers = () => {
           <Card.Body>
             <Card.Title className="mb-2">{customer.customer_name}</Card.Title> {/* Add margin-bottom to the title */}
             <Card.Text className="mb-3"> {/* Add margin-bottom to the text */}
-              <strong>Start Time:</strong> {new Date(customer.start_time).toLocaleString()}<br />
-              <strong>End Time:</strong> {customer.end_time ? new Date(customer.end_time).toLocaleString() : 'Open'}<br />
+              <strong>Start Time:</strong> {new Date(customer.start_time).toLocaleString('en-GB')}<br />
+              <strong>End Time:</strong> {customer.end_time ? new Date(customer.end_time).toLocaleString('en-GB') : 'Open'}<br />
               <strong>Total Cost:</strong> ${customer.total_cost}<br />
               <strong>Price Per Hour:</strong> ${customer.price_per_hour}<br />
               <strong>Open Session:</strong> {!customer.end_time ? 'Yes' : 'No'}<br />
@@ -564,7 +563,7 @@ const Customers = () => {
                   <strong>Machine:</strong> {log.machine_name} ({log.machine_type})<br />
                   <strong>Time Spent:</strong> {(log.time_spent * 60).toFixed(2)} minutes<br />
                   <strong>Price Type:</strong> {log.price_type}<br />
-                  <strong>Timestamp:</strong> {new Date(log.timestamp).toLocaleString()}
+                  <strong>Timestamp:</strong> {new Date(log.timestamp).toLocaleString('en-GB')}
                 </ListGroup.Item>
               ))}
             </ListGroup>

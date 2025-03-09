@@ -60,7 +60,7 @@ const FoodDrinks = () => {
     switch (reportType) {
       case 'daily':
         filtered = data.filter(q =>
-          new Date(q.date).toLocaleDateString() === new Date(selectedDate).toLocaleDateString()
+          new Date(q.date).toLocaleDateString('en-GB') === new Date(selectedDate).toLocaleDateString('en-GB')
         );
         break;
       case 'monthly':
@@ -191,15 +191,8 @@ const FoodDrinks = () => {
     <div dir="rtl">
       <Container className="mt-4">
         <h2 className="mb-4 text-center">
-          <FaUtensils className="me-2" /> المأكولات والمشروبات <FaGlassCheers className="ms-2" />
+          <FaUtensils className="me-2" /> المطبخ <FaGlassCheers className="ms-2" />
         </h2>
-
-        {/* Only show "Add Food/Drink" button if user is admin */}
-        {userRole === 'admin' && (
-          <Button variant="primary" onClick={() => setShowModal(true)} className="mb-3">
-            <FaPlus className="me-2" /> إضافة مأكولات/مشروبات
-          </Button>
-        )}
 
         {/* Responsive Table */}
         <Card className="shadow">
@@ -211,8 +204,6 @@ const FoodDrinks = () => {
                   <th>النوع</th>
                   <th>السعر</th>
                   <th>الكمية</th>
-                  <th>السعر الكلي</th>
-                  {userRole === 'admin' && <th>الإجراءات</th>}
                 </tr>
               </thead>
               <tbody>
@@ -222,17 +213,6 @@ const FoodDrinks = () => {
                     <td>{item.item_type}</td>
                     <td>{item.price}</td>
                     <td>{item.quantity}</td>
-                    <td>{item.total_price}</td>
-                    {userRole === 'admin' && (
-                      <td>
-                        <Button variant="warning" onClick={() => handleEdit(item)} className="me-2">
-                          <FaEdit className="me-1" /> تعديل
-                        </Button>
-                        <Button variant="danger" onClick={() => handleDelete(item.id)}>
-                          <FaTrash className="me-1" /> حذف
-                        </Button>
-                      </td>
-                    )}
                   </tr>
                 ))}
               </tbody>
@@ -332,61 +312,6 @@ const FoodDrinks = () => {
             </Form>
           </Modal.Body>
         </Modal>
-        {/* New Sales Report Section */}
-        <Row className="mt-5">
-          <Col>
-            <Card className="shadow">
-              <Card.Header>
-                <FaCalendarAlt className="me-2" /> تقرير المبيعات
-              </Card.Header>
-              <Card.Body>
-                {/* Date Selector */}
-                <DateSelector
-                  reportType={reportType}
-                  selectedDate={selectedDate}
-                  setSelectedDate={(v) => handleDateFilterChange('date', v)}
-                  selectedMonth={selectedMonth}
-                  setSelectedMonth={(v) => handleDateFilterChange('month', v)}
-                  selectedYear={selectedYear}
-                  setSelectedYear={(v) => handleDateFilterChange('year', v)}
-                  onReportTypeChange={(e) => handleDateFilterChange('type', e.target.value)}
-                />
-
-                {/* Sales Table */}
-                <Table striped bordered hover responsive className="mt-4">
-                  <thead>
-                    <tr>
-                      <th>التاريخ</th>
-                      <th>اسم العنصر</th>
-                      <th>الكمية</th>
-                      <th>سعر الشراء</th>
-                      <th>سعر البيع</th>
-                      <th>الإجمالي</th>
-                      <th>الربح</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {calculateSoldItems().map((item, index) => (
-                      <tr key={index}>
-                        <td>{new Date(item.date).toLocaleString()}</td>
-                        <td>{item.item_name}</td>
-                        <td>{item.quantity}</td>
-                        <td>{item.purchasePrice}</td>
-                        <td>{item.salePrice}</td>
-                        <td>{(item.purchasePrice * item.quantity).toFixed(2)}</td>
-                        <td className="text-success">{item.profit.toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-
-                {calculateSoldItems().length === 0 && (
-                  <p className="text-muted text-center">لا توجد مبيعات في الفترة المحددة</p>
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
       </Container>
     </div>
   );
