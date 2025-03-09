@@ -617,7 +617,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
                     <Row className="mt-4 justify-content-center">
                         <Col xs={12} md={6} className="d-flex flex-wrap justify-content-center gap-2">
                             <Button onClick={() => setShowTimerModal(true)}>
-                                تعديل الوقت
+                                اضافة وقت
                             </Button>
 
                             <TimerModal
