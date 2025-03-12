@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Table, Badge, ButtonGroup, Button } from 'react-bootstrap';
+import { Container, Row, Col, Card, Table, Badge, ButtonGroup, Button, Spinner } from 'react-bootstrap';
 import { FaFileInvoiceDollar, FaCalendarAlt, FaUtensils, FaMoneyBillWave, FaChartBar, FaList } from 'react-icons/fa';
 import axios from 'axios';
 import ReportTypeSelector from './ReportTypeSelector';
@@ -17,7 +17,7 @@ const Reports = () => {
     const [filteredPayments, setFilteredPayments] = useState([]);
     const [machines, setMachines] = useState([]);
     const [reportType, setReportType] = useState('daily');
-    const [selectedDate, setSelectedDate] = useState('');
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); // Set today as default date
     const [selectedMonth, setSelectedMonth] = useState('');
     const [selectedYear, setSelectedYear] = useState('');
     const [selectedMachine, setSelectedMachine] = useState('');
@@ -25,18 +25,22 @@ const Reports = () => {
     const [endHour, setEndHour] = useState('');
     const [showFinancial, setShowFinancial] = useState(true);
     const [showSalesSummary, setShowSalesSummary] = useState(false); // Add state for 'الكمية مباعة'
+    const [loading, setLoading] = useState(true); // Loading state
 
     const fetchData = async () => {
         try {
             const quotesResponse = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/quotes');
             const paymentsResponse = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/payments');
+            // console.log(quotesResponse.data)
             setQuotes(quotesResponse.data);
             setPayments(paymentsResponse.data);
 
             const uniqueMachines = [...new Set(quotesResponse.data.map(quote => quote.machine_name))];
             setMachines(uniqueMachines);
+
         } catch (error) {
             console.error('Error fetching data:', error);
+            setLoading(false); // Set loading to false even if there is an error
         }
     };
 
@@ -51,7 +55,7 @@ const Reports = () => {
 
     const handleReportTypeChange = (e) => {
         setReportType(e.target.value);
-        setSelectedDate('');
+        setSelectedDate(new Date().toISOString().split('T')[0]); // Reset selectedDate to today
         setSelectedMonth('');
         setSelectedYear('');
         setSelectedMachine('');
@@ -156,7 +160,7 @@ const Reports = () => {
                     case 'daily':
                         return paymentDate === new Date(selectedDate).toLocaleDateString('en-GB');
                     case 'monthly':
-                        return new Date(p.date).getMonth()+1 === parseInt(selectedMonth);
+                        return new Date(p.date).getMonth() + 1 === parseInt(selectedMonth);
                     case 'yearly':
                         return new Date(p.date).getFullYear() === year;
                     default:
@@ -202,24 +206,29 @@ const Reports = () => {
                 });
                 break;
         }
-
+        // console.log(selectedDate);
+        // console.log(reportType)
         setFilteredQuotes(filteredQ);
         setFilteredPayments(filteredP);
+        setLoading(false); // Set loading to false when data is fetched
     };
 
     useEffect(() => {
         fetchData();
         fetchFoodDrinks();
     }, []);
-
+    // Use useEffect to filter data whenever relevant states (like quotes) change
     useEffect(() => {
-        if ((reportType === 'daily' && selectedDate) ||
-            (reportType === 'monthly' && selectedMonth) ||
-            (reportType === 'yearly' && selectedYear) ||
-            (reportType === 'machine' && selectedMachine)) {
-            filterData();
+        if (quotes.length > 0 || payments.length > 0) {
+            if ((reportType === 'daily' && selectedDate) ||
+                (reportType === 'monthly' && selectedMonth) ||
+                (reportType === 'yearly' && selectedYear) ||
+                (reportType === 'machine' && selectedMachine)) {
+                filterData();
+            }
         }
-    }, [selectedDate, selectedMonth, selectedYear, selectedMachine, startHour, endHour]);
+    }, [quotes, payments, reportType, selectedDate, selectedMonth, selectedYear, selectedMachine, startHour, endHour]);
+
 
     const totalIncome = filteredQuotes.reduce((sum, q) => sum + parseFloat(q.total_cost || 0) - parseFloat(q.foods_drinks_cost || 0), 0);
     const totalExpenses = reportType === 'yearly'
@@ -258,7 +267,16 @@ const Reports = () => {
 
     const soldItems = calculateSoldFoodDrinks(filteredQuotes);
     const totalFoodDrinksProfit = calculateTotalFoodDrinksProfit(soldItems);
-
+    // Render loading spinner until data is fetched
+    if (loading) {
+        return (
+            <Container fluid className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
+                <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </Spinner>
+            </Container>
+        );
+    }
     return (
         <div dir="rtl">
             <Container fluid className="my-4">

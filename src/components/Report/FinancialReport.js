@@ -1,9 +1,11 @@
-import React from 'react';
-import { Table, Card, Alert } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Table, Card } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileInvoice, faMoneyBillWave, faCalendar, faCoins, faChartLine } from '@fortawesome/free-solid-svg-icons';
+import { faFileInvoice, faMoneyBillWave, faCalendar, faCoins, faChartLine, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 
 const FinancialReport = ({ filteredQuotes, filteredPayments, netTotal, totalFoodDrinksProfit, reportType }) => {
+    const [isTableExpanded, setIsTableExpanded] = useState(false); // State to manage table visibility
+
     // Function to group payments by type for yearly report
     const groupPaymentsByType = (payments) => {
         const grouped = {
@@ -21,30 +23,22 @@ const FinancialReport = ({ filteredQuotes, filteredPayments, netTotal, totalFood
 
         return grouped;
     };
+
     function formatAndFlipDateTime(dateTimeString) {
-        // Split the date and time
         const [datePart, timePart] = dateTimeString.replace(/\//g, '-').split(' ');
-    
-        // Split the date part by '-'
         const [day, month, year] = datePart.split('-');
-    
-        // Re-arrange to YYYY-MM-DD format
         const flippedDatePart = `${year}-${month}-${day}`;
-    
-        // Combine the flipped date with the time part
         const flippedDateTimeString = `${flippedDatePart} ${timePart}`;
-    
-        // Parse the modified date string into a Date object
         const date = new Date(flippedDateTimeString);
-    
-        // Format the date and time using 'en-GB' locale (DD/MM/YYYY HH:MM:SS)
-        const formattedDate = date.toLocaleString('en-GB'); // Format as DD/MM/YYYY
-    
-        // Return the formatted date and time
+        const formattedDate = date.toLocaleString('en-GB');
         return formattedDate; 
     }
+
     // Group payments by type for yearly report
     const groupedPayments = reportType === 'yearly' ? groupPaymentsByType(filteredPayments) : null;
+
+    // Toggle table visibility
+    const toggleTable = () => setIsTableExpanded(!isTableExpanded);
 
     return (
         <Card className="shadow-sm">
@@ -55,6 +49,14 @@ const FinancialReport = ({ filteredQuotes, filteredPayments, netTotal, totalFood
                 </h5>
             </Card.Header>
             <Card.Body>
+                {/* Toggle Button */}
+                {/* <div className="mb-3 text-end">
+                    <a href="#!" onClick={toggleTable}>
+                        {isTableExpanded ? 'إخفاء التفاصيل' : 'عرض التفاصيل'}
+                        <FontAwesomeIcon icon={isTableExpanded ? faChevronUp : faChevronDown} className="ms-2" />
+                    </a>
+                </div> */}
+
                 {/* Main Table for Quotes and Payments */}
                 <Table striped bordered hover responsive className="mb-4">
                     <thead className="bg-light">
@@ -67,40 +69,46 @@ const FinancialReport = ({ filteredQuotes, filteredPayments, netTotal, totalFood
                             <th>التاريخ</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {filteredQuotes.map((q, i) => (
-                            <tr key={q.id}>
-                                <td>{i + 1}</td>
-                                <td>
-                                    <FontAwesomeIcon icon={faFileInvoice} className="me-2" />
-                                    فاتورة
-                                </td>
-                                <td>{q.user_name}</td>
-                                <td>{q.machine_name}</td>
-                                <td className="text-success">+{q.total_cost}</td>
-                                <td>
-                                    <FontAwesomeIcon icon={faCalendar} className="me-2" />
-                                    {formatAndFlipDateTime(q.date)}
-                                </td>
-                            </tr>
-                        ))}
-                        {filteredPayments.map((p, i) => (
-                            <tr key={p.id}>
-                                <td>{filteredQuotes.length + i + 1}</td>
-                                <td>
-                                    <FontAwesomeIcon icon={faMoneyBillWave} className="me-2" />
-                                    مصروفات
-                                </td>
-                                <td>admin</td>
-                                <td>{p.name}</td>
-                                <td className="text-danger">-{p.cost}</td>
-                                <td>
-                                    <FontAwesomeIcon icon={faCalendar} className="me-2" />
-                                    {p.date}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
+                    
+                    {/* Conditionally render table body based on isTableExpanded */}
+                    {isTableExpanded && (
+                        <tbody>
+                            {filteredQuotes.map((q, i) => (
+                                <tr key={q.id}>
+                                    <td>{i + 1}</td>
+                                    <td>
+                                        <FontAwesomeIcon icon={faFileInvoice} className="me-2" />
+                                        فاتورة
+                                    </td>
+                                    <td>{q.user_name}</td>
+                                    <td>{q.machine_name}</td>
+                                    <td className="text-success">+{q.total_cost}</td>
+                                    <td>
+                                        <FontAwesomeIcon icon={faCalendar} className="me-2" />
+                                        {formatAndFlipDateTime(q.date)}
+                                    </td>
+                                </tr>
+                            ))}
+                            {filteredPayments.map((p, i) => (
+                                <tr key={p.id}>
+                                    <td>{filteredQuotes.length + i + 1}</td>
+                                    <td>
+                                        <FontAwesomeIcon icon={faMoneyBillWave} className="me-2" />
+                                        مصروفات
+                                    </td>
+                                    <td>admin</td>
+                                    <td>{p.name}</td>
+                                    <td className="text-danger">-{p.cost}</td>
+                                    <td>
+                                        <FontAwesomeIcon icon={faCalendar} className="me-2" />
+                                        {p.date}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    )}
+
+                    {/* Show only the footer by default */}
                     <tfoot className="bg-light">
                         <tr>
                             <td colSpan="4" className="text-end"><strong> الإجمالي:</strong></td>
@@ -109,14 +117,11 @@ const FinancialReport = ({ filteredQuotes, filteredPayments, netTotal, totalFood
                             </td>
                             <td></td>
                         </tr>
-                        {/* <tr>
-                            <td colSpan="4" className="text-end"><strong>إجمالي الربح من المأكولات والمشروبات:</strong></td>
-                            <td className="text-success"><strong>{totalFoodDrinksProfit.toFixed(2)}</strong></td>
-                            <td></td>
-                        </tr> */}
                         <tr>
                             <td colSpan="4" className="text-end"><strong>صافي الربح:</strong></td>
-                            <td className="text-success"><strong>{(netTotal + totalFoodDrinksProfit).toFixed(2)}</strong></td>
+                            <td className="text-success">
+                                <strong>{(netTotal + totalFoodDrinksProfit).toFixed(2)}</strong>
+                            </td>
                             <td></td>
                         </tr>
                     </tfoot>

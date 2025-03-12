@@ -316,7 +316,14 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
 
                     {/* Timer Display */}
                     {timeLeft !== null && (
-                        <div className="mb-4 p-3 bg-dark text-white rounded text-center">
+                        <div
+                            className={`mb-4 p-3 text-white rounded text-center ${isTimer
+                                    ? timeLeft > 0
+                                        ? 'bg-danger' // Red background when the timer is still running
+                                        : 'bg-success' // Green background when the timer is finished
+                                    : 'bg-dark' // Default dark background when isTimer is false
+                                }`}
+                        >
                             <h4 className="mb-3">
                                 <FaClock className="me-2" />
                                 الوقت المتبقي

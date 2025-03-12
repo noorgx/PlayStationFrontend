@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, Modal, Form, Table, InputGroup, FormControl, Card, Pagination, Container, Row, Col } from 'react-bootstrap';
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaDollarSign, FaFileInvoiceDollar, FaPrint } from 'react-icons/fa';
+import { Button, Modal, Form, Table, InputGroup, FormControl, Card, Pagination, Container, Row, Col, Spinner } from 'react-bootstrap';
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaDollarSign, FaFileInvoiceDollar, FaPrint, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import axios from 'axios';
 import { useReactToPrint } from 'react-to-print'; // Import the library
 import './QuotePDF.css';
@@ -11,6 +11,8 @@ const Quotes = () => {
     const [showModal, setShowModal] = useState(false);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [editMode, setEditMode] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [quotesPerPage] = useState(15); // Number of quotes per page
     const [currentQuote, setCurrentQuote] = useState({
         user_name: '',
         machine_name: '',
@@ -24,18 +26,12 @@ const Quotes = () => {
         food_drinks: [],
         date: ''
     });
-    console.log(currentQuote)
     const [selectedQuoteDetails, setSelectedQuoteDetails] = useState('');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filterStartDate, setFilterStartDate] = useState('');
-    const [filterEndDate, setFilterEndDate] = useState('');
-    const [filterDay, setFilterDay] = useState(''); // New state for day filter
-    const [filterMonth, setFilterMonth] = useState('');
-    const [filterYear, setFilterYear] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10);
+    const [filterRoom, setFilterRoom] = useState('');
     const [filterDate, setFilterDate] = useState('');
-
+    const [loading, setLoading] = useState(true); // Loading state
+    const [sortColumn, setSortColumn] = useState(null); // Track the column to sort
+    const [sortDirection, setSortDirection] = useState('asc'); // Track sorting direction
     // Ref for the PDF content
     const printableRef = useRef(null);
     const [selectedQuote, setSelectedQuote] = useState(null);
@@ -55,7 +51,31 @@ const Quotes = () => {
         window.location.reload(); // Reload the page to restore the app's state
     };
 
+    // Function to handle sorting
+    const handleSort = (column) => {
+        let direction = 'asc';
+        if (sortColumn === column && sortDirection === 'asc') {
+            direction = 'desc';
+        }
+        setSortColumn(column);
+        setSortDirection(direction);
 
+        const sortedQuotes = [...filteredQuotes].sort((a, b) => {
+            if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
+            if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        setFilteredQuotes(sortedQuotes);
+    };
+
+    // Function to render sorting icon
+    const renderSortIcon = (column) => {
+        if (sortColumn === column) {
+            return sortDirection === 'asc' ? <FaSortUp /> : <FaSortDown />;
+        }
+        return <FaSort />;
+    };
     const QuotePDF = ({ quote }) => (
         <div dir="rtl" style={{ padding: '10px', fontFamily: 'Arial, sans-serif' }}>
             <h1 style={{ textAlign: 'right', marginBottom: '10px' }}>فاتورة الاستخدام</h1>
@@ -124,6 +144,7 @@ const Quotes = () => {
 
     // Fetch all quotes
     const fetchQuotes = async () => {
+        setLoading(true); // Set loading to true before fetching
         try {
             const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/quotes');
             setQuotes(response.data);
@@ -131,12 +152,94 @@ const Quotes = () => {
             setFilteredQuotes(response.data);
         } catch (error) {
             console.error('Error fetching quotes:', error);
+        } finally {
+            setLoading(false); // Set loading to false after fetching
         }
     };
 
     // Calculate total cost for filtered quotes
     const totalCost = filteredQuotes.reduce((sum, quote) => sum + parseFloat(quote.cost), 0);
+    // Calculate the index of the first and last quote on the current page
+    const indexOfLastQuote = currentPage * quotesPerPage;
+    const indexOfFirstQuote = indexOfLastQuote - quotesPerPage;
+    const currentQuotes = filteredQuotes.slice(indexOfFirstQuote, indexOfLastQuote);
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+    // Render Pagination
+    const renderPagination = () => {
+        const totalPages = Math.ceil(filteredQuotes.length / quotesPerPage);
+        const maxVisiblePages = 10; // Maximum number of visible page buttons
+        const halfVisiblePages = Math.floor(maxVisiblePages / 2);
 
+        // Calculate the start and end of the visible page range
+        let startPage = Math.max(1, currentPage - halfVisiblePages);
+        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+        // Adjust the start page if the end page exceeds the total pages
+        if (endPage - startPage + 1 < maxVisiblePages) {
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+
+        // Generate the visible page numbers
+        const pageNumbers = [];
+        for (let i = startPage; i <= endPage; i++) {
+            pageNumbers.push(i);
+        }
+
+        return (
+            <Pagination>
+                {/* Previous Button */}
+                <Pagination.Prev
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                />
+
+                {/* First Page Button (if not in the visible range) */}
+                {startPage > 1 && (
+                    <>
+                        <Pagination.Item
+                            key={1}
+                            active={1 === currentPage}
+                            onClick={() => paginate(1)}
+                        >
+                            1
+                        </Pagination.Item>
+                        {startPage > 2 && <Pagination.Ellipsis />} {/* Show ellipsis if there's a gap */}
+                    </>
+                )}
+
+                {/* Visible Page Buttons */}
+                {pageNumbers.map(number => (
+                    <Pagination.Item
+                        key={number}
+                        active={number === currentPage}
+                        onClick={() => paginate(number)}
+                    >
+                        {number}
+                    </Pagination.Item>
+                ))}
+
+                {/* Last Page Button (if not in the visible range) */}
+                {endPage < totalPages && (
+                    <>
+                        {endPage < totalPages - 1 && <Pagination.Ellipsis />} {/* Show ellipsis if there's a gap */}
+                        <Pagination.Item
+                            key={totalPages}
+                            active={totalPages === currentPage}
+                            onClick={() => paginate(totalPages)}
+                        >
+                            {totalPages}
+                        </Pagination.Item>
+                    </>
+                )}
+
+                {/* Next Button */}
+                <Pagination.Next
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                />
+            </Pagination>
+        );
+    };
     // Update form inputs to match new structure
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -231,52 +334,35 @@ const Quotes = () => {
         const date = new Date(flippedDateTimeString);
 
         // Format the date and time using 'en-GB' locale (DD/MM/YYYY HH:MM:SS)
-        const formattedDate = date.toLocaleDateString('en-GB'); // Format as DD/MM/YYYY
+        const formattedDate = date.toLocaleString('en-GB'); // Format as DD/MM/YYYY
 
         // Return the formatted date and time
-        return flippedDateTimeString;
+        return formattedDate;
     }
 
-    // Handle day filter change
-    const handleDayFilterChange = (e) => {
-        const day = e.target.value;
-        setFilterDay(day);
-        filterQuotes(filterDay, filterMonth, filterYear);
-    };
-
-    // Handle month filter change
-    const handleMonthFilterChange = (e) => {
-        const month = e.target.value;
-        setFilterMonth(month);
-        filterQuotes(filterDay, filterMonth, filterYear);
-    };
-
-    // Handle year filter change
-    const handleYearFilterChange = (e) => {
-        const year = e.target.value;
-        setFilterYear(year);
-        filterQuotes(filterDay, filterMonth, filterYear);
-    };
-
     // Filter quotes based on search term, date interval, day, month, and year
-    const filterQuotes = (selectedDate) => {
+    const filterQuotes = (selectedDate, selectedRoom) => {
         let filtered = quotes;
-
 
         if (selectedDate) {
             filtered = filtered.filter((quote) => {
-                // console.log(new Date(selectedDate).toLocaleDateString('en-GB'))
-
                 const quoteDate = formatAndFlipDateTime(quote.date);
-
-                // console.log(formatAndFlipDateTime(quote.date))
                 return quoteDate === new Date(selectedDate).toLocaleDateString('en-GB');
             });
+        }
+
+        if (selectedRoom) {
+            filtered = filtered.filter((quote) => quote.room === selectedRoom);
         }
 
         setFilteredQuotes(filtered);
     };
 
+    const getUniqueRooms = (quotes) => {
+        const rooms = quotes.map(quote => quote.room); // Extract all rooms
+        const uniqueRooms = [...new Set(rooms)]; // Remove duplicates
+        return uniqueRooms.filter(room => room); // Filter out empty/null values
+    };
 
     // Handle "Show Details" button click
     const handleShowDetails = (quote) => {
@@ -284,7 +370,11 @@ const Quotes = () => {
         setSelectedQuote(quote);  // This ensures the quote is available for printing
         setShowDetailsModal(true);
     };
-
+    const handleRoomFilterChange = (e) => {
+        const room = e.target.value;
+        setFilterRoom(room);
+        filterQuotes(filterDate, room); // Pass both date and room filters
+    };
     // Fetch quotes on component mount
     useEffect(() => {
         fetchQuotes();
@@ -293,6 +383,15 @@ const Quotes = () => {
     return (
         <div dir="rtl">
             <Container fluid className="my-4" dir="rtl">
+                {/* Loading Spinner */}
+                {loading && (
+                    <div className="text-center my-4">
+                        <Spinner animation="border" role="status">
+                            <span className="visually-hidden">جاري التحميل...</span>
+                        </Spinner>
+                        <p>جاري تحميل البيانات...</p>
+                    </div>
+                )}
                 {/* Modal Form */}
                 <Modal show={showModal} onHide={resetForm} centered dir="rtl">
                     <Modal.Header closeButton >
@@ -455,6 +554,21 @@ const Quotes = () => {
                             />
                         </Form.Group>
                     </Col>
+                    <Col xs={12} sm={6} md={4} lg={3}>
+                        <Form.Group controlId="filterRoom">
+                            <Form.Label>فلترة حسب الغرفة</Form.Label>
+                            <Form.Control
+                                as="select"
+                                value={filterRoom}
+                                onChange={handleRoomFilterChange}
+                            >
+                                <option value="">كل الغرف</option>
+                                {getUniqueRooms(quotes).map((room, index) => (
+                                    <option key={index} value={room}>{room}</option>
+                                ))}
+                            </Form.Control>
+                        </Form.Group>
+                    </Col>
                 </Row>
 
 
@@ -463,23 +577,33 @@ const Quotes = () => {
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>المستخدم</th>
-                            <th>الجهاز</th>
-                            <th>الغرفة</th>
-                            <th>المجموع</th>
-                            <th>التاريخ</th>
+                            <th onClick={() => handleSort('user_name')}>
+                                المستخدم {renderSortIcon('user_name')}
+                            </th>
+                            <th onClick={() => handleSort('machine_name')}>
+                                الجهاز {renderSortIcon('machine_name')}
+                            </th>
+                            <th onClick={() => handleSort('room')}>
+                                الغرفة {renderSortIcon('room')}
+                            </th>
+                            <th onClick={() => handleSort('total_cost')}>
+                                المجموع {renderSortIcon('total_cost')}
+                            </th>
+                            <th onClick={() => handleSort('date')}>
+                                التاريخ {renderSortIcon('date')}
+                            </th>
                             <th>الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredQuotes.map((quote, index) => (
+                        {currentQuotes.map((quote, index) => (
                             <tr key={quote.id}>
                                 <td>{index + 1}</td>
                                 <td>{quote.user_name}</td>
                                 <td>{quote.machine_name}</td>
                                 <td>{quote.room}</td>
                                 <td>{quote.total_cost}</td>
-                                <td>{formatAndFlipDateTime(quote.date)}</td>
+                                <td>{formatAndFlipDateTime_str(quote.date)}</td>
                                 <td>
                                     <Button variant="warning" size="sm" onClick={() => handleEdit(quote)} className="me-2">
                                         <FaEdit /> تعديل
@@ -495,7 +619,6 @@ const Quotes = () => {
                         ))}
                     </tbody>
                 </Table>
-
                 {/* Updated Details Modal */}
                 <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} centered size="lg">
                     <Modal.Header closeButton>
@@ -518,7 +641,10 @@ const Quotes = () => {
                         </Card>
                     </Modal.Body>
                 </Modal>
-
+                {/* Pagination Controls */}
+                <div className="d-flex justify-content-center">
+                    {renderPagination()}
+                </div>
             </Container>
         </div>
     );

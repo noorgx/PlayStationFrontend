@@ -238,7 +238,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
 
             // Calculate the cost for the time spent in the old mode
             const timeCost = (timeSpentMilliseconds / (1000 * 60 * 60)) * parseFloat(oldPricePerHour);
-
+            const oldRoom = updatedCustomer.current_machine.room;
             // Add the time cost to the total cost
             updatedCustomer.total_cost += timeCost;
 
@@ -287,6 +287,10 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
 
             // Notify the parent component
             updateCustomer(updatedCustomer);
+            // Check if the room has changed, if so refresh the page
+            if (oldRoom !== newRoom) {
+                window.location.reload(); // Refresh the page
+            }
         } catch (error) {
             console.error('Error changing mode:', error);
         } finally {
@@ -638,7 +642,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
                             <Button variant="info" onClick={refreshTotalCost} disabled={isDisabled}>
                                 <FaSyncAlt className="me-2" /> تحديث التكلفة
                             </Button>
-                            <Button variant="warning" onClick={handleEndSession}>
+                            <Button variant="warning" onClick={handleEndSession} disabled={isDisabled}>
                                 <FaStopCircle className="me-2" /> إنهاء الجلسة
                             </Button>
                             <Button variant="success" onClick={handleGenerateQuote}>
