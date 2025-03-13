@@ -28,6 +28,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
     const [showTimerModal, setShowTimerModal] = useState(false);
     const [hours, setHours] = useState(0);
     const [minutes, setMinutes] = useState(0);
+    const [isRequestInProgress, setIsRequestInProgress] = useState(false);
     // Function to handle printing
     const handlePrint = () => {
         const printSection = printableRef.current;
@@ -385,8 +386,16 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
 
     // Modified payment confirmation handler
     const handlePaymentConfirmation = async () => {
+    
+        if (isRequestInProgress) {
+            return; // If the request is already in progress, return early
+        }
+    
+        // Set the flag to true indicating that the request is in progress
+        setIsRequestInProgress(true);
+    
         const finalTotal = quoteDetails.baseTotal - manualDiscount + additionalCost;
-
+    
         const quoteToSend = {
             ...quoteDetails,
             manualDiscount: manualDiscount,
@@ -395,13 +404,13 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             additionalCostReason: additionalCostReason,
             total_cost: finalTotal.toFixed(2),
         };
-
+    
         try {
             const quoteResponse = await axios.post(
                 'https://playstationbackend.netlify.app/.netlify/functions/server/quotes',
                 quoteToSend
             );
-
+    
             if (quoteResponse.status === 201) {
                 await axios.delete(
                     `https://playstationbackend.netlify.app/.netlify/functions/server/customers/${customer.id}`
@@ -412,6 +421,11 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             }
         } catch (error) {
             console.error('خطأ في تأكيد الدفع:', error);
+        } finally {
+            // Once the request is done (success or failure), allow the request again
+            setTimeout(() => {
+                setIsRequestInProgress(false); // Reset flag after a delay (optional)
+            }, 3000); // Add delay (e.g., 3 seconds)
         }
     };
 
