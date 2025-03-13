@@ -61,12 +61,12 @@ const FinancialReport = ({ filteredQuotes, filteredPayments, netTotal, totalExpe
                 <Table striped bordered hover responsive className="mb-4">
                     <thead className="bg-light">
                         <tr>
-                            <th>#</th>
+                            {/* <th>#</th>
                             <th>النوع</th>
                             <th>المستخدم</th>
                             <th>الاسم</th>
                             <th>المبلغ</th>
-                            <th>التاريخ</th>
+                            <th>التاريخ</th> */}
                         </tr>
                     </thead>
                     
