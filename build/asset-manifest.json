@@ -1,16 +1,16 @@
 {
   "files": {
     "main.css": "/PlayStationFrontend/static/css/main.65fc10d8.css",
-    "main.js": "/PlayStationFrontend/static/js/main.859fb184.js",
+    "main.js": "/PlayStationFrontend/static/js/main.1bdffecd.js",
     "static/js/488.e75445ad.chunk.js": "/PlayStationFrontend/static/js/488.e75445ad.chunk.js",
     "static/media/notification.mp3": "/PlayStationFrontend/static/media/notification.54c42d181a96fe78abc8.mp3",
     "index.html": "/PlayStationFrontend/index.html",
     "main.65fc10d8.css.map": "/PlayStationFrontend/static/css/main.65fc10d8.css.map",
-    "main.859fb184.js.map": "/PlayStationFrontend/static/js/main.859fb184.js.map",
+    "main.1bdffecd.js.map": "/PlayStationFrontend/static/js/main.1bdffecd.js.map",
     "488.e75445ad.chunk.js.map": "/PlayStationFrontend/static/js/488.e75445ad.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.65fc10d8.css",
-    "static/js/main.859fb184.js"
+    "static/js/main.1bdffecd.js"
   ]
 }

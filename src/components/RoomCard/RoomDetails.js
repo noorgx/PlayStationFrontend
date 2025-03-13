@@ -386,16 +386,16 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
 
     // Modified payment confirmation handler
     const handlePaymentConfirmation = async () => {
-    
+
         if (isRequestInProgress) {
             return; // If the request is already in progress, return early
         }
-    
+
         // Set the flag to true indicating that the request is in progress
         setIsRequestInProgress(true);
-    
+
         const finalTotal = quoteDetails.baseTotal - manualDiscount + additionalCost;
-    
+
         const quoteToSend = {
             ...quoteDetails,
             manualDiscount: manualDiscount,
@@ -404,13 +404,13 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             additionalCostReason: additionalCostReason,
             total_cost: finalTotal.toFixed(2),
         };
-    
+
         try {
             const quoteResponse = await axios.post(
                 'https://playstationbackend.netlify.app/.netlify/functions/server/quotes',
                 quoteToSend
             );
-    
+
             if (quoteResponse.status === 201) {
                 await axios.delete(
                     `https://playstationbackend.netlify.app/.netlify/functions/server/customers/${customer.id}`
@@ -784,7 +784,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
                         <Button variant="secondary" onClick={() => setShowQuoteModal(false)}>
                             إغلاق
                         </Button>
-                        <Button variant="primary" onClick={handlePaymentConfirmation}>
+                        <Button variant="primary" onClick={handlePaymentConfirmation} disabled={isRequestInProgress}>
                             تأكيد الدفع
                         </Button>
                         {selectedQuote ? (
