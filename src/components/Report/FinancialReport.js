@@ -3,7 +3,7 @@ import { Table, Card } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileInvoice, faMoneyBillWave, faCalendar, faCoins, faChartLine, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 
-const FinancialReport = ({ filteredQuotes, filteredPayments, netTotal, totalFoodDrinksProfit, reportType }) => {
+const FinancialReport = ({ filteredQuotes, filteredPayments, netTotal, totalExpenses,totalIncome, reportType }) => {
     const [isTableExpanded, setIsTableExpanded] = useState(false); // State to manage table visibility
 
     // Function to group payments by type for yearly report
@@ -112,15 +112,22 @@ const FinancialReport = ({ filteredQuotes, filteredPayments, netTotal, totalFood
                     <tfoot className="bg-light">
                         <tr>
                             <td colSpan="4" className="text-end"><strong> الإجمالي:</strong></td>
-                            <td className={netTotal >= 0 ? 'text-success' : 'text-danger'}>
-                                <strong>{netTotal.toFixed(2)}</strong>
+                            <td className={totalIncome >= 0 ? 'text-success' : 'text-danger'}>
+                                <strong>{totalIncome.toFixed(2)}</strong>
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td colSpan="4" className="text-end"><strong> الخصومات:</strong></td>
+                            <td className='text-danger'>
+                                <strong>{totalExpenses.toFixed(2)}</strong>
                             </td>
                             <td></td>
                         </tr>
                         <tr>
                             <td colSpan="4" className="text-end"><strong>صافي الربح:</strong></td>
                             <td className="text-success">
-                                <strong>{(netTotal + totalFoodDrinksProfit).toFixed(2)}</strong>
+                                <strong>{(netTotal).toFixed(2)}</strong>
                             </td>
                             <td></td>
                         </tr>

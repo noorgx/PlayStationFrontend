@@ -17,7 +17,7 @@ const Reports = () => {
     const [filteredPayments, setFilteredPayments] = useState([]);
     const [machines, setMachines] = useState([]);
     const [reportType, setReportType] = useState('daily');
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); // Set today as default date
+    const [selectedDate, setSelectedDate] = useState(new Date(new Date().setHours(new Date().getHours() + 2)).toISOString().split('T')[0]); // Set today as default date
     const [selectedMonth, setSelectedMonth] = useState('');
     const [selectedYear, setSelectedYear] = useState('');
     const [selectedMachine, setSelectedMachine] = useState('');
@@ -62,27 +62,46 @@ const Reports = () => {
         setStartHour('');
         setEndHour('');
     };
-
+    const getDaysInMonth = (month, year) => {
+        return new Date(year, month, 0).getDate();  // The 0th day of the next month gives you the last day of the selected month
+      };
     const calculateYearlyExpenses = (filteredPayments) => {
+        // console.log(filteredPayments)
+        // console.log(selectedDate)
         return filteredPayments.reduce((sum, p) => {
             const paymentDate = new Date(p.date).toLocaleDateString('en-GB');
             const year = selectedYear ? parseInt(selectedYear) : new Date().getFullYear();
+            const month = selectedMonth ? parseInt(selectedMonth) : new Date().getMonth()+1;
+            const daysInMonth = getDaysInMonth(month, new Date().getFullYear());
+            const day =  new Date(selectedDate).toLocaleDateString('en-GB') ;
 
             if (p.type === 'one-time' && new Date(p.date).getFullYear() === year) {
                 return sum + parseFloat(p.cost || 0);
             }
-
-            if (p.type === 'daily') {
+            if (p.type === 'one-time' && new Date(p.date).getMonth() === month) {
+                return sum + parseFloat(p.cost || 0);
+            }
+            if (p.type === 'one-time' && paymentDate === day) {
+                return sum + parseFloat(p.cost || 0);
+            }
+            if (p.type === 'daily' && reportType =='yearly') {
                 const daysInYear = (year % 4 === 0) ? 366 : 365;
                 return sum + (parseFloat(p.cost || 0) * daysInYear);
             }
-
-            if (p.type === 'monthly') {
+            if (p.type === 'daily' && reportType =='monthly') {
+                return sum + (parseFloat(p.cost || 0) * daysInMonth);
+            }
+            if (p.type === 'daily' && reportType =='daily') {
+                return sum + (parseFloat(p.cost || 0));
+            }
+            if (p.type === 'monthly' && reportType =='yearly') {
                 return sum + (parseFloat(p.cost || 0) * 12);
             }
-
-            if (p.type === 'yearly') {
-                return sum + parseFloat(p.cost || 0);
+            if (p.type === 'monthly' && reportType =='monthly') {
+                return sum + (parseFloat(p.cost || 0));
+            }
+            if (p.type === 'yearly' && reportType =='yearly') {
+                return sum + (parseFloat(p.cost || 0));
             }
 
             return sum;
@@ -151,7 +170,7 @@ const Reports = () => {
     const filterData = () => {
         let filteredQ = quotes;
         let filteredP = payments;
-        console.log(filteredP)
+        // console.log(filteredP)
         filteredP = payments.filter(p => {
             const paymentDate = new Date(p.date).toLocaleDateString('en-GB');
             const year = selectedYear ? parseInt(selectedYear) : new Date().getFullYear();
@@ -167,7 +186,7 @@ const Reports = () => {
                         return true;
                 }
             }
-            return p.type === reportType;
+            return true;
         });
 
         switch (reportType) {
@@ -230,10 +249,9 @@ const Reports = () => {
     }, [quotes, payments, reportType, selectedDate, selectedMonth, selectedYear, selectedMachine, startHour, endHour]);
 
 
-    const totalIncome = filteredQuotes.reduce((sum, q) => sum + parseFloat(q.total_cost || 0) - parseFloat(q.foods_drinks_cost || 0), 0);
-    const totalExpenses = reportType === 'yearly'
-        ? calculateYearlyExpenses(filteredPayments)
-        : filteredPayments.reduce((sum, p) => sum + parseFloat(p.cost || 0), 0);
+    const totalIncome = filteredQuotes.reduce((sum, q) => sum + parseFloat(q.total_cost || 0), 0);
+    const totalExpenses = calculateYearlyExpenses(filteredPayments)
+        // : filteredPayments.reduce((sum, p) => sum + parseFloat(p.cost || 0), 0);
     const netTotal = totalIncome - totalExpenses;
 
     const calculateSoldFoodDrinks = (filteredQuotes) => {
@@ -340,7 +358,8 @@ const Reports = () => {
                         filteredQuotes={filteredQuotes}
                         filteredPayments={filteredPayments}
                         netTotal={netTotal}
-                        totalFoodDrinksProfit={totalFoodDrinksProfit}
+                        totalExpenses = {totalExpenses}
+                        totalIncome={totalIncome}
                     />
                 ) : showSalesSummary ? (
                     <Row className="mt-4">
