@@ -10,6 +10,7 @@ import Register from './components/Register';
 import Login from './components/Login';
 import AdminPanel from './components/AdminPanel';
 import Rooms from './components/Rooms';
+import ShopDetails from './components/RoomCard/ShopDetails';
 import Calc from './components/Calc';
 import Payments from './components/Payments';
 import Reports from './components/Report/Reports';
@@ -64,6 +65,10 @@ function App() {
         <Route
           path="PlayStationFrontend/"
           element={<ProtectedRoute element={<Rooms />} />}
+        />
+        <Route
+          path="PlayStationFrontend/shop"
+          element={<ProtectedRoute element={<ShopDetails />} />}
         />
         <Route
           path="PlayStationFrontend/reports"

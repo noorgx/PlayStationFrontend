@@ -563,6 +563,7 @@ const Quotes = () => {
                                 onChange={handleRoomFilterChange}
                             >
                                 <option value="">كل الغرف</option>
+                                <option value="متجر">متجر</option>
                                 {getUniqueRooms(quotes).map((room, index) => (
                                     <option key={index} value={room}>{room}</option>
                                 ))}

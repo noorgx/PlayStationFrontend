@@ -9,7 +9,7 @@ import TimerModal from './TimerModalAdd';
 const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer }) => {
     const [customer, setCustomer] = useState(initialCustomer);
     const [initialStartTime, setInitialStartTime] = useState(initialCustomer.start_time); // Track initial start time
-    const [showCancelButton, setShowCancelButton] = useState(true); // Control button visibility
+    const [showCancelButton, setShowCancelButton] = useState(true); 
     const [showForm, setShowForm] = useState(false);
     const [showModeModal, setShowModeModal] = useState(false);
     const [showQuoteModal, setShowQuoteModal] = useState(false);
@@ -412,12 +412,32 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             );
 
             if (quoteResponse.status === 201) {
-                await axios.delete(
-                    `https://playstationbackend.netlify.app/.netlify/functions/server/customers/${customer.id}`
-                );
-                setShowQuoteModal(false);
-                fetchCustomers();
-                window.location.reload();
+                let isSuccess = false;
+    
+                while (!isSuccess) {
+                    try {
+                        const customerResponse = await axios.delete(
+                            `https://playstationbackend.netlify.app/.netlify/functions/server/customers/${customer.id}`
+                        );
+                        
+                        if (customerResponse.status === 200) {
+                            isSuccess = true; // Break out of loop if successful
+                            setShowQuoteModal(false);
+                            fetchCustomers();
+                            window.location.reload(); // Reload page on success
+                        }
+                        if (customerResponse.status === 404) {
+                            isSuccess = true; // Break out of loop if successful
+                            setShowQuoteModal(false);
+                            fetchCustomers();
+                            window.location.reload(); // Reload page on success
+                        }
+                    } catch (error) {
+                        console.error("Error deleting customer, retrying...", error);
+                        // Optional: Add a small delay before retrying, e.g., 1 second
+                        await new Promise((resolve) => setTimeout(resolve, 1000));
+                    }
+                }
             }
         } catch (error) {
             console.error('خطأ في تأكيد الدفع:', error);

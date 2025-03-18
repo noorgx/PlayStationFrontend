@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navbar, Nav, Container } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaGamepad, FaDoorOpen, FaUtensils, FaCalculator, FaQuoteRight, FaWarehouse, FaUserShield, FaSignOutAlt, FaUserPlus, FaSignInAlt } from 'react-icons/fa';
+import { FaGamepad, FaDoorOpen, FaUtensils, FaCalculator, FaQuoteRight, FaWarehouse, FaUserShield, FaSignOutAlt, FaUserPlus, FaSignInAlt,FaShoppingBag } from 'react-icons/fa';
 
 const CustomNavbar = ({ user, onLogout }) => {
   const navigate = useNavigate();
@@ -32,7 +32,10 @@ const CustomNavbar = ({ user, onLogout }) => {
                 <Nav className="me-auto">
                   <Nav.Link as={Link} to="/PlayStationFrontend/" className="me-3 d-flex align-items-center">
                     <FaDoorOpen className="me-2" /> الغرف
-                  </Nav.Link>
+                  </Nav.Link> 
+                  <Nav.Link as={Link} to="/PlayStationFrontend/shop" className="me-3 d-flex align-items-center">
+                    <FaShoppingBag className="me-2" /> المتجر
+                  </Nav.Link> 
                   <Nav.Link as={Link} to="/PlayStationFrontend/machines" className="me-3 d-flex align-items-center">
                     <FaGamepad className="me-2" /> الأجهزة
                   </Nav.Link>
