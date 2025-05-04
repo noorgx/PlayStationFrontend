@@ -35,7 +35,7 @@ const RoomCard = ({ room, machines, customer: initialCustomer }) => {
     // Fetch customers data
     const fetchCustomers = async () => {
         try {
-            const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/customers');
+            const response = await axios.get('http://localhost:8888/.netlify/functions/server/customers');
             setCustomers(response.data);
         } catch (error) {
             console.error('Error fetching customers:', error);

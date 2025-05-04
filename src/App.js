@@ -1,6 +1,6 @@
 // src/App.js
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import CustomNavbar from './components/Navbar';
 import Machines from './components/Machines';
 import FoodDrinks from './components/FoodDrinks';

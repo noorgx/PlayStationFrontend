@@ -146,7 +146,7 @@ const Quotes = () => {
     const fetchQuotes = async () => {
         setLoading(true); // Set loading to true before fetching
         try {
-            const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/quotes');
+            const response = await axios.get('http://localhost:8888/.netlify/functions/server/quotes');
             setQuotes(response.data);
             console.log(response.data)
             setFilteredQuotes(response.data);
@@ -257,9 +257,9 @@ const Quotes = () => {
         e.preventDefault();
         try {
             if (editMode) {
-                await axios.put(`https://playstationbackend.netlify.app/.netlify/functions/server/quotes/${currentQuote.id}`, currentQuote);
+                await axios.put(`http://localhost:8888/.netlify/functions/server/quotes/${currentQuote.id}`, currentQuote);
             } else {
-                await axios.post('https://playstationbackend.netlify.app/.netlify/functions/server/quotes', currentQuote);
+                await axios.post('http://localhost:8888/.netlify/functions/server/quotes', currentQuote);
             }
             setShowModal(false);
             fetchQuotes();
@@ -278,7 +278,7 @@ const Quotes = () => {
     // Handle delete button click
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`https://playstationbackend.netlify.app/.netlify/functions/server/quotes/${id}`);
+            await axios.delete(`http://localhost:8888/.netlify/functions/server/quotes/${id}`);
             fetchQuotes();
         } catch (error) {
             console.error('Error deleting quote:', error);

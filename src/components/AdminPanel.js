@@ -27,7 +27,7 @@ const AdminPanel = () => {
   // Fetch all users
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/users');
+      const response = await axios.get('http://localhost:8888/.netlify/functions/server/users');
       setUsers(response.data);
     } catch (error) {
       setError('حدث خطأ أثناء جلب المستخدمين');
@@ -53,11 +53,11 @@ const AdminPanel = () => {
 
       if (editUserId) {
         // Update user
-        await axios.put(`https://playstationbackend.netlify.app/.netlify/functions/server/users/${editUserId}`, payload);
+        await axios.put(`http://localhost:8888/.netlify/functions/server/users/${editUserId}`, payload);
         setMessage('تم تحديث المستخدم بنجاح!');
       } else {
         // Add new user
-        await axios.post('https://playstationbackend.netlify.app/.netlify/functions/server/users/register', payload);
+        await axios.post('http://localhost:8888/.netlify/functions/server/users/register', payload);
         setMessage('تم إضافة المستخدم بنجاح!');
       }
       fetchUsers(); // Refresh the user list
@@ -80,7 +80,7 @@ const AdminPanel = () => {
   // Handle delete button click
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`https://playstationbackend.netlify.app/.netlify/functions/server/users/${id}`);
+      await axios.delete(`http://localhost:8888/.netlify/functions/server/users/${id}`);
       setMessage('تم حذف المستخدم بنجاح!');
       fetchUsers(); // Refresh the user list
     } catch (error) {

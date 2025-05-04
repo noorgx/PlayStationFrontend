@@ -26,7 +26,7 @@ const Login = ({ onLogin }) => {
     setLoading(true);
 
     try {
-      const response = await axios.post('https://playstationbackend.netlify.app/.netlify/functions/server/users/login', formData);
+      const response = await axios.post('http://localhost:8888/.netlify/functions/server/users/login', formData);
       setMessage(response.data.message);
       onLogin(response.data); // Update user state in App.js
       if (response.data.role === 'admin') {

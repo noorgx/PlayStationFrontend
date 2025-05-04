@@ -32,7 +32,7 @@ const StorageAndPayments = () => {
   // Fetch all food/drinks
   const fetchFoodDrinks = async () => {
     try {
-      const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/food-drinks');
+      const response = await axios.get('http://localhost:8888/.netlify/functions/server/food-drinks');
       setFoodDrinks(response.data);
     } catch (error) {
       console.error('Error fetching food/drinks:', error);
@@ -42,8 +42,8 @@ const StorageAndPayments = () => {
   const fetchData = async () => {
     try {
       const [foodResponse, quotesResponse] = await Promise.all([
-        axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/food-drinks'),
-        axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/quotes')
+        axios.get('http://localhost:8888/.netlify/functions/server/food-drinks'),
+        axios.get('http://localhost:8888/.netlify/functions/server/quotes')
       ]);
 
       setFoodDrinks(foodResponse.data);
@@ -141,10 +141,10 @@ const StorageAndPayments = () => {
     try {
       if (editMode) {
         // Update food/drink item
-        await axios.put(`https://playstationbackend.netlify.app/.netlify/functions/server/food-drinks/${currentItem.id}`, currentItem);
+        await axios.put(`http://localhost:8888/.netlify/functions/server/food-drinks/${currentItem.id}`, currentItem);
       } else {
         // Add new food/drink item
-        await axios.post('https://playstationbackend.netlify.app/.netlify/functions/server/food-drinks', currentItem);
+        await axios.post('http://localhost:8888/.netlify/functions/server/food-drinks', currentItem);
       }
       setShowModal(false);
       fetchFoodDrinks(); // Refresh the list
@@ -164,7 +164,7 @@ const StorageAndPayments = () => {
   // Handle delete button click
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`https://playstationbackend.netlify.app/.netlify/functions/server/food-drinks/${id}`);
+      await axios.delete(`http://localhost:8888/.netlify/functions/server/food-drinks/${id}`);
       fetchFoodDrinks(); // Refresh the list
     } catch (error) {
       console.error('Error deleting food/drink item:', error);

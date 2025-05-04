@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Form, Table, InputGroup, FormControl, Card, Pagination, Container, Row, Col } from 'react-bootstrap';
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaDollarSign, FaFileInvoiceDollar } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaDollarSign, FaFileInvoiceDollar, FaFilter } from 'react-icons/fa';
 import axios from 'axios';
 
 const Payments = () => {
@@ -13,16 +13,21 @@ const Payments = () => {
         type: '',
         details: '',
         date: '',
-        cost: 0, // Add cost field
+        cost: 0,
     });
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
+    const [dateFilter, setDateFilter] = useState({
+        startDate: '',
+        endDate: ''
+    });
+    const [showDateFilter, setShowDateFilter] = useState(false);
 
     // Fetch all payments
     const fetchPayments = async () => {
         try {
-            const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/payments');
+            const response = await axios.get('http://localhost:8888/.netlify/functions/server/payments');
             setPayments(response.data);
             setFilteredPayments(response.data);
         } catch (error) {
@@ -39,14 +44,66 @@ const Payments = () => {
         });
     };
 
+    // Handle date filter input changes
+    const handleDateFilterChange = (e) => {
+        const { name, value } = e.target;
+        setDateFilter({
+            ...dateFilter,
+            [name]: value,
+        });
+    };
+
+    // Apply filters (search and date range)
+    const applyFilters = () => {
+        let filtered = [...payments];
+
+        // Apply search filter
+        if (searchTerm) {
+            filtered = filtered.filter(payment =>
+                payment.name.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        // Apply date range filter if at least start date is provided
+        if (dateFilter.startDate) {
+            filtered = filtered.filter(payment => {
+                const paymentDate = new Date(payment.date);
+                const startDate = new Date(dateFilter.startDate);
+                const endDate = dateFilter.endDate ? new Date(dateFilter.endDate) : new Date();
+
+                // If only start date is provided, filter payments on that exact date
+                if (!dateFilter.endDate) {
+                    return paymentDate.toDateString() === startDate.toDateString();
+                }
+                
+                // If both dates are provided, filter payments within the range
+                return paymentDate >= startDate && paymentDate <= endDate;
+            });
+        }
+
+        setFilteredPayments(filtered);
+        setCurrentPage(1);
+    };
+
+    // Reset date filters
+    const resetDateFilters = () => {
+        setDateFilter({
+            startDate: '',
+            endDate: ''
+        });
+        setSearchTerm('');
+        setFilteredPayments(payments);
+        setCurrentPage(1);
+    };
+
     // Handle form submission (add or update payment)
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             if (editMode) {
-                await axios.put(`https://playstationbackend.netlify.app/.netlify/functions/server/payments/${currentPayment.id}`, currentPayment);
+                await axios.put(`http://localhost:8888/.netlify/functions/server/payments/${currentPayment.id}`, currentPayment);
             } else {
-                await axios.post('https://playstationbackend.netlify.app/.netlify/functions/server/payments', currentPayment);
+                await axios.post('http://localhost:8888/.netlify/functions/server/payments', currentPayment);
             }
             setShowModal(false);
             fetchPayments();
@@ -65,7 +122,7 @@ const Payments = () => {
     // Handle delete button click
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`https://playstationbackend.netlify.app/.netlify/functions/server/payments/${id}`);
+            await axios.delete(`http://localhost:8888/.netlify/functions/server/payments/${id}`);
             fetchPayments();
         } catch (error) {
             console.error('Error deleting payment:', error);
@@ -79,7 +136,7 @@ const Payments = () => {
             type: '',
             details: '',
             date: '',
-            cost: 0, // Reset cost field
+            cost: 0,
         });
         setEditMode(false);
         setShowModal(false);
@@ -87,13 +144,7 @@ const Payments = () => {
 
     // Handle search input change
     const handleSearchChange = (e) => {
-        const term = e.target.value;
-        setSearchTerm(term);
-        const filtered = payments.filter((payment) =>
-            payment.name.toLowerCase().includes(term.toLowerCase())
-        );
-        setFilteredPayments(filtered);
-        setCurrentPage(1);
+        setSearchTerm(e.target.value);
     };
 
     // Calculate total cost for filtered payments
@@ -106,6 +157,11 @@ const Payments = () => {
 
     // Change page
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+    // Apply filters whenever search term or date filters change
+    useEffect(() => {
+        applyFilters();
+    }, [searchTerm, dateFilter.startDate, dateFilter.endDate]);
 
     // Fetch payments on component mount
     useEffect(() => {
@@ -126,9 +182,9 @@ const Payments = () => {
                     </Col>
                 </Row>
 
-                {/* Search Input */}
+                {/* Search and Filter Section */}
                 <Row className="mb-3">
-                    <Col md={12}>
+                    <Col md={6}>
                         <InputGroup>
                             <InputGroup.Text><FaSearch /></InputGroup.Text>
                             <FormControl
@@ -138,7 +194,53 @@ const Payments = () => {
                             />
                         </InputGroup>
                     </Col>
+                    <Col md={6} className="text-end">
+                        <Button 
+                            variant={showDateFilter ? 'primary' : 'outline-primary'} 
+                            onClick={() => setShowDateFilter(!showDateFilter)}
+                            className="me-2"
+                        >
+                            <FaFilter className="me-2" /> فلترة حسب التاريخ
+                        </Button>
+                        <Button variant="outline-secondary" onClick={resetDateFilters}>
+                            إعادة تعيين الفلتر
+                        </Button>
+                    </Col>
                 </Row>
+
+                {/* Date Filter Section */}
+                {showDateFilter && (
+                    <Row className="mb-3">
+                        <Col md={4}>
+                            <Form.Group>
+                                <Form.Label>من تاريخ</Form.Label>
+                                <Form.Control
+                                    type="date"
+                                    name="startDate"
+                                    value={dateFilter.startDate}
+                                    onChange={handleDateFilterChange}
+                                />
+                            </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                            <Form.Group>
+                                <Form.Label>إلى تاريخ</Form.Label>
+                                <Form.Control
+                                    type="date"
+                                    name="endDate"
+                                    value={dateFilter.endDate}
+                                    onChange={handleDateFilterChange}
+                                    min={dateFilter.startDate}
+                                />
+                            </Form.Group>
+                        </Col>
+                        <Col md={4} className="d-flex align-items-end">
+                            <Button variant="primary" onClick={applyFilters}>
+                                تطبيق الفلتر
+                            </Button>
+                        </Col>
+                    </Row>
+                )}
 
                 {/* Payments Table */}
                 <Row>

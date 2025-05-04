@@ -8,8 +8,27 @@ import MachineSelector from './MachineSelector';
 import HourSelector from './HourSelector';
 import FinancialReport from './FinancialReport';
 import MachineReport from './MachineReport';
-
+function getEgyptDatePlus2Hours() {
+    const now = new Date();
+    const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+  
+    // Format using Egypt time zone (Africa/Cairo)
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Africa/Cairo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  
+    const parts = formatter.formatToParts(twoHoursLater);
+    const year = parts.find(p => p.type === 'year').value;
+    const month = parts.find(p => p.type === 'month').value;
+    const day = parts.find(p => p.type === 'day').value;
+  
+    return `${year}-${month}-${day}`;
+  }
 const Reports = () => {
+    console.log(getEgyptDatePlus2Hours());
     const [quotes, setQuotes] = useState([]);
     const [payments, setPayments] = useState([]);
     const [foodDrinks, setFoodDrinks] = useState([]);
@@ -17,7 +36,7 @@ const Reports = () => {
     const [filteredPayments, setFilteredPayments] = useState([]);
     const [machines, setMachines] = useState([]);
     const [reportType, setReportType] = useState('daily');
-    const [selectedDate, setSelectedDate] = useState(new Date(new Date().setHours(new Date().getHours() + 2)).toISOString().split('T')[0]); // Set today as default date
+    const [selectedDate, setSelectedDate] = useState(getEgyptDatePlus2Hours()); // Set today as default date
     const [selectedMonth, setSelectedMonth] = useState('');
     const [selectedYear, setSelectedYear] = useState('');
     const [selectedMachine, setSelectedMachine] = useState('');
@@ -29,8 +48,8 @@ const Reports = () => {
 
     const fetchData = async () => {
         try {
-            const quotesResponse = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/quotes');
-            const paymentsResponse = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/payments');
+            const quotesResponse = await axios.get('http://localhost:8888/.netlify/functions/server/quotes');
+            const paymentsResponse = await axios.get('http://localhost:8888/.netlify/functions/server/payments');
             // console.log(quotesResponse.data)
             setQuotes(quotesResponse.data);
             setPayments(paymentsResponse.data);
@@ -46,7 +65,7 @@ const Reports = () => {
 
     const fetchFoodDrinks = async () => {
         try {
-            const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/food-drinks');
+            const response = await axios.get('http://localhost:8888/.netlify/functions/server/food-drinks');
             setFoodDrinks(response.data);
         } catch (error) {
             console.error('Error fetching food/drinks:', error);

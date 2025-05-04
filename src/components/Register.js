@@ -26,7 +26,7 @@ const Register = () => {
     setMessage('');
 
     try {
-      const response = await axios.post('https://playstationbackend.netlify.app/.netlify/functions/server/users/register', formData);
+      const response = await axios.post('http://localhost:8888/.netlify/functions/server/users/register', formData);
       setMessage(response.data.message);
       setFormData({ name: '', emailOrPhone: '', password: '', role: 'user' });
       navigate('/PlayStationFrontend/login'); // Redirect to login after registration

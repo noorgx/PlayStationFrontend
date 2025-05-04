@@ -15,14 +15,13 @@ const ChangeModeModal = ({ show, handleClose, currentMode, currentMachine, curre
     const [filteredMachines, setFilteredMachines] = useState([]); // Filtered machines based on room
     const [rooms, setRooms] = useState([]); // List of rooms
     const [customers, setCustomers] = useState([]); // List of customers using machines
-
     // Calculate the old price per hour dynamically
     const oldPricePerHour = currentMode === 'Single' ? pricePerHourSingle : pricePerHourMulti;
 
     // Fetch all machines
     const fetchMachines = async () => {
         try {
-            const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/machines');
+            const response = await axios.get('http://localhost:8888/.netlify/functions/server/machines');
             setMachines(response.data);
         } catch (error) {
             console.error('خطأ في جلب الأجهزة:', error);
@@ -32,7 +31,7 @@ const ChangeModeModal = ({ show, handleClose, currentMode, currentMachine, curre
     // Fetch all customers
     const fetchCustomers = async () => {
         try {
-            const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/customers');
+            const response = await axios.get('http://localhost:8888/.netlify/functions/server/customers');
             setCustomers(response.data);
         } catch (error) {
             console.error('خطأ في جلب العملاء:', error);
@@ -61,7 +60,7 @@ const ChangeModeModal = ({ show, handleClose, currentMode, currentMachine, curre
     const filterAvailableRooms = () => {
         const groupedMachines = groupMachinesByRoom();
         const roomList = Object.keys(groupedMachines); // Get a list of all room numbers
-
+        console.log(groupedMachines)
         // Find rooms that are not in use by customers, but include the current room
         const availableRooms = roomList.filter((room) => {
             const customer = customers.find((c) => c.current_machine.room === room);
@@ -149,14 +148,20 @@ const ChangeModeModal = ({ show, handleClose, currentMode, currentMachine, curre
                         <Form.Control
                             as="select"
                             value={newMachine}
-                            onChange={(e) => setNewMachine(e.target.value)}
+                            onChange={(e) => {
+                                const selectedMachine = e.target.value;
+                                setNewMachine(selectedMachine);
+                                const selectedOption = e.target.selectedOptions[0]; // Get the first selected <option>
+                                // Set new price per hour based on the selected mode
+                                setNewPricePerHour(newMode === 'Single' ? selectedOption.getAttribute('single') : selectedOption.getAttribute('multi'));
+                            }}
                             disabled={filteredMachines.length === 0} // Disable if no machines in the selected room
                         >
                             {filteredMachines.length === 0 ? (
                                 <option>لا توجد أجهزة متاحة لهذه الغرفة</option>
                             ) : (
                                 filteredMachines.map((machine) => (
-                                    <option key={machine.id} value={machine.machine_name}>
+                                    <option key={machine.id} value={machine.machine_name} multi={machine.price_per_hour_multi} single={machine.price_per_hour_single}>
                                         {machine.machine_name}
                                     </option>
                                 ))

@@ -12,7 +12,7 @@ const Rooms = () => {
   // Fetch all machines
   const fetchMachines = async () => {
     try {
-      const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/machines');
+      const response = await axios.get('http://localhost:8888/.netlify/functions/server/machines');
       setMachines(response.data);
     } catch (error) {
       console.error('خطأ في جلب الأجهزة:', error);
@@ -22,7 +22,7 @@ const Rooms = () => {
   // Fetch all customers
   const fetchCustomers = async () => {
     try {
-      const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/customers');
+      const response = await axios.get('http://localhost:8888/.netlify/functions/server/customers');
       setCustomers(response.data);
     } catch (error) {
       console.error('خطأ في جلب العملاء:', error);

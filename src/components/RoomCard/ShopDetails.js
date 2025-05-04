@@ -139,7 +139,7 @@ const ShopDetails = () => {
         while (!quoteSaved) {
             try {
                 const quoteResponse = await axios.post(
-                    'https://playstationbackend.netlify.app/.netlify/functions/server/quotes',
+                    'http://localhost:8888/.netlify/functions/server/quotes',
                     updatedQuote
                 );
                 if (quoteResponse.status === 201) {
@@ -157,7 +157,7 @@ const ShopDetails = () => {
         while (!bulkDecreaseCompleted) {
             try {
                 const bulkDecreaseResponse = await axios.post(
-                    'https://playstationbackend.netlify.app/.netlify/functions/server/food-drinks/bulk-decrease',
+                    'http://localhost:8888/.netlify/functions/server/food-drinks/bulk-decrease',
                     { items: foodDrinksToUpdate }
                 );
                 console.log('Bulk decrease response:', bulkDecreaseResponse.data);

@@ -26,7 +26,7 @@ const Machines = () => {
 
   const fetchMachines = async () => {
     try {
-      const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/machines');
+      const response = await axios.get('http://localhost:8888/.netlify/functions/server/machines');
       setMachines(response.data);
     } catch (error) {
       console.error('حدث خطأ أثناء جلب الآلات:', error);
@@ -57,9 +57,9 @@ const Machines = () => {
 
       let machineResponse;
       if (editMode) {
-        machineResponse = await axios.put(`https://playstationbackend.netlify.app/.netlify/functions/server/machines/${currentMachine.id}`, machineData);
+        machineResponse = await axios.put(`http://localhost:8888/.netlify/functions/server/machines/${currentMachine.id}`, machineData);
       } else {
-        machineResponse = await axios.post('https://playstationbackend.netlify.app/.netlify/functions/server/machines', machineData);
+        machineResponse = await axios.post('http://localhost:8888/.netlify/functions/server/machines', machineData);
       }
 
       console.log(machineResponse);
@@ -80,7 +80,7 @@ const Machines = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`https://playstationbackend.netlify.app/.netlify/functions/server/machines/${id}`);
+      await axios.delete(`http://localhost:8888/.netlify/functions/server/machines/${id}`);
       fetchMachines();
     } catch (error) {
       console.error('حدث خطأ أثناء حذف الجهاز:', error);

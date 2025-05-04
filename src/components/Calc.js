@@ -18,7 +18,7 @@ const Calc = () => {
 
   const fetchMachines = async () => {
     try {
-      const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/machines');
+      const response = await axios.get('http://localhost:8888/.netlify/functions/server/machines');
       setMachines(response.data);
     } catch (error) {
       console.error('Error fetching machines:', error);

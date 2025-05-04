@@ -16,7 +16,7 @@ const FoodDrinks = () => {
   // Fetch all food/drinks
   const fetchFoodDrinks = async () => {
     try {
-      const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/food-drinks');
+      const response = await axios.get('http://localhost:8888/.netlify/functions/server/food-drinks');
       setFoodDrinks(response.data);
     } catch (error) {
       console.error('Error fetching food/drinks:', error);

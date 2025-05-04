@@ -9,7 +9,7 @@ import TimerModal from './TimerModalAdd';
 const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer }) => {
     const [customer, setCustomer] = useState(initialCustomer);
     const [initialStartTime, setInitialStartTime] = useState(initialCustomer.start_time); // Track initial start time
-    const [showCancelButton, setShowCancelButton] = useState(true); 
+    const [showCancelButton, setShowCancelButton] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [showModeModal, setShowModeModal] = useState(false);
     const [showQuoteModal, setShowQuoteModal] = useState(false);
@@ -47,49 +47,62 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
 
     // Helper function to calculate time difference and update total_cost
     const calculateTotalCost = (customer) => {
+        // Use end_time if it exists and is earlier than the current time, otherwise use the current time
+        const currentTime = customer.end_time && new Date(customer.end_time).getTime() <= new Date().getTime()
+            ? new Date(customer.end_time).getTime()
+            : new Date().getTime();
+
+        // Get the last time check or start time
         const lastTimeCheck = new Date(customer.last_time_check || customer.start_time).getTime();
-        const currentTime = new Date().getTime();
-        const timeSpent = (currentTime - lastTimeCheck) / (1000 * 60 * 60); // Time in hours
+
+        // Calculate the time spent in hours
+        const timeSpent = (currentTime - lastTimeCheck) / (1000 * 60 * 60);
 
         // Calculate cost based on time spent and price_per_hour
         const timeCost = timeSpent * parseFloat(customer.price_per_hour);
 
-        // Calculate additional costs (e.g., food/drinks)
-        const additionalCost = customer.drinks_foods?.reduce((total, item) => {
-            return total + item.price * item.quantity;
-        }, 0) || 0;
+        // // Calculate additional costs (e.g., food/drinks)
+        // const additionalCost = customer.drinks_foods?.reduce((total, item) => {
+        //     return total + item.price * item.quantity;
+        // }, 0) || 0;
 
-        // Update total_cost
+        // Return the total cost (time cost + additional costs)
         return timeCost;
     };
 
     // Function to refresh the total cost
     const refreshTotalCost = async () => {
         if (loading) return; // Don't refresh if an update is in progress
-        try {
-            const updatedCustomer = { ...customer };
+        if (!localStorage.getItem(`customer_${customer.id}`)) {
+            try {
+                const updatedCustomer = { ...customer };
 
-            // Calculate the time-based cost for the current session
-            const timeCost = calculateTotalCost(updatedCustomer);
+                // Calculate the time-based cost for the current session
+                const timeCost = calculateTotalCost(updatedCustomer);
 
-            // Update total_cost by adding the time-based cost and additional costs
-            updatedCustomer.total_cost += timeCost;
+                // Update total_cost by adding the time-based cost and additional costs
+                updatedCustomer.total_cost += timeCost;
 
-            // Update the last_time_check to the current time
-            updatedCustomer.last_time_check = new Date().toISOString();
+                // Update the last_time_check to the current time
+                // updatedCustomer.last_time_check = new Date().toISOString();
+                updatedCustomer.last_time_check = updatedCustomer.end_time && new Date(updatedCustomer.end_time).getTime() <= new Date().getTime()
+                    ? new Date(updatedCustomer.end_time).toISOString()
+                    : new Date().toISOString();
+                // Update the customer on the server
+                await axios.put(
+                    `http://localhost:8888/.netlify/functions/server/customers/${updatedCustomer.id}`,
+                    updatedCustomer
+                );
 
-            // Update the customer on the server
-            await axios.put(
-                `https://playstationbackend.netlify.app/.netlify/functions/server/customers/${updatedCustomer.id}`,
-                updatedCustomer
-            );
-
-            // Notify the parent component
-            updateCustomer(updatedCustomer);
-            // Update the local state
-            setCustomer(updatedCustomer);
-        } catch (error) {
-            console.error('Error refreshing total cost:', error);
+                // Notify the parent component
+                updateCustomer(updatedCustomer);
+                // Update the local state
+                setCustomer(updatedCustomer);
+            } catch (error) {
+                console.error('Error refreshing total cost:', error);
+            }
+        } else {
+            return;
         }
     };
 
@@ -129,7 +142,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
 
             // Update the customer on the server
             await axios.put(
-                `https://playstationbackend.netlify.app/.netlify/functions/server/customers/${updatedCustomer.id}`,
+                `http://localhost:8888/.netlify/functions/server/customers/${updatedCustomer.id}`,
                 updatedCustomer
             );
 
@@ -173,7 +186,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
 
             // Update the customer on the server
             await axios.put(
-                `https://playstationbackend.netlify.app/.netlify/functions/server/customers/${updatedCustomer.id}`,
+                `http://localhost:8888/.netlify/functions/server/customers/${updatedCustomer.id}`,
                 updatedCustomer
             );
 
@@ -206,7 +219,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
 
             // Send the updated customer data to the server via PUT request
             await axios.put(
-                `https://playstationbackend.netlify.app/.netlify/functions/server/customers/${updatedCustomer.id}`,
+                `http://localhost:8888/.netlify/functions/server/customers/${updatedCustomer.id}`,
                 updatedCustomer
             );
 
@@ -232,13 +245,14 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             const lastTimeCheck = new Date(updatedCustomer.last_time_check || updatedCustomer.start_time).getTime();
             const currentTime = new Date().getTime();
             const timeSpentMilliseconds = currentTime - lastTimeCheck;
-
+            const timeSpentMillisecondsLog = currentTime - new Date(updatedCustomer.start_time).getTime();
             // Convert time spent to hours and minutes
             const timeSpentHours = Math.floor(timeSpentMilliseconds / (1000 * 60 * 60));
             const timeSpentMinutes = Math.floor((timeSpentMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
 
             // Calculate the cost for the time spent in the old mode
             const timeCost = (timeSpentMilliseconds / (1000 * 60 * 60)) * parseFloat(oldPricePerHour);
+            const timeCostLog = (timeSpentMillisecondsLog / (1000 * 60 * 60)) * parseFloat(oldPricePerHour);
             const oldRoom = updatedCustomer.current_machine.room;
             // Add the time cost to the total cost
             updatedCustomer.total_cost += timeCost;
@@ -256,7 +270,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
                 old_start_time: updatedCustomer.start_time,
                 time_spent_hours: timeSpentHours,
                 time_spent_minutes: timeSpentMinutes,
-                time_cost: timeCost, // Add the cost of the time spent
+                time_cost: timeCostLog, // Add the cost of the time spent
                 timestamp: new Date().toISOString(),
             };
 
@@ -279,7 +293,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
 
             // Update the customer on the server
             await axios.put(
-                `https://playstationbackend.netlify.app/.netlify/functions/server/customers/${updatedCustomer.id}`,
+                `http://localhost:8888/.netlify/functions/server/customers/${updatedCustomer.id}`,
                 updatedCustomer
             );
 
@@ -305,7 +319,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
         try {
             // Delete the customer
             const deleteResponse = await axios.delete(
-                `https://playstationbackend.netlify.app/.netlify/functions/server/customers/${customer.id}`
+                `http://localhost:8888/.netlify/functions/server/customers/${customer.id}`
             );
 
             if (deleteResponse.status === 200) {
@@ -321,10 +335,8 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
 
     // Handle generating a quote
     const handleGenerateQuote = () => {
-        // Check if the session ended trigger is true for this customer
-        const currentTime = new Date().getTime();
 
-        if (initialCustomer.end_time <= currentTime) {
+        if (!localStorage.getItem(`customer_${customer.id}`)) {
             return; // Exit the function early
         }
 
@@ -369,7 +381,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             machine_usage_cost: machineUsageCost.toFixed(2), // Total cost for machine usage
             logs: logsDetails,
             food_drinks: foodDrinksDetails,
-            date: new Date().toLocaleString('en-GB'),
+            date: customer.end_time ? new Date(customer.end_time).toLocaleString('en-GB') : new Date().toLocaleString('en-GB'),
             baseTotal: baseTotal,
             manualDiscount: 0,
             discountReason: '',
@@ -403,39 +415,95 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
             additionalCost: additionalCost,
             additionalCostReason: additionalCostReason,
             total_cost: finalTotal.toFixed(2),
+            quote_id: customer.id
+
         };
 
         try {
-            const quoteResponse = await axios.post(
-                'https://playstationbackend.netlify.app/.netlify/functions/server/quotes',
-                quoteToSend
-            );
 
-            if (quoteResponse.status === 201) {
-                let isSuccess = false;
-    
-                while (!isSuccess) {
-                    try {
-                        const customerResponse = await axios.delete(
-                            `https://playstationbackend.netlify.app/.netlify/functions/server/customers/${customer.id}`
-                        );
-                        
-                        if (customerResponse.status === 200) {
-                            isSuccess = true; // Break out of loop if successful
-                            setShowQuoteModal(false);
-                            fetchCustomers();
-                            window.location.reload(); // Reload page on success
-                        }
-                        if (customerResponse.status === 404) {
-                            isSuccess = true; // Break out of loop if successful
-                            setShowQuoteModal(false);
-                            fetchCustomers();
-                            window.location.reload(); // Reload page on success
-                        }
-                    } catch (error) {
+            let isQuoteSuccess = false;
+
+            while (true) {
+                try {
+                    const quoteResponse = await axios.post(
+                        'http://localhost:8888/.netlify/functions/server/quotes',
+                        quoteToSend
+                    );
+
+                    if (quoteResponse.status === 201) {
+                        const quote = {
+                            user_name: JSON.parse(localStorage.getItem('user')).name,
+                            machine_name: customer.current_machine.machine_name,
+                            room: customer.current_machine.room,
+                            start_time: new Date(customer.start_time).toLocaleString('en-GB'),
+                            end_time: customer.end_time ? new Date(customer.end_time).toLocaleString('en-GB') : 'لم ينته بعد',
+                            total_cost: 0, // Total cost (foods/drinks + machine usage)
+                            foods_drinks_cost: 0, // Total cost for foods/drinks
+                            machine_usage_cost: 0, // Total cost for machine usage
+                            logs: [],
+                            food_drinks: [],
+                            date: customer.end_time ? new Date(customer.end_time).toLocaleString('en-GB') : new Date(customer.end_time).toLocaleString('en-GB'),
+                            baseTotal: 0,
+                            manualDiscount: 0,
+                            discountReason: '',
+                            additionalCost: 0,
+                            additionalCostReason: '',
+                            finalTotal: 0,
+                        };
+                        setQuoteDetails(quote);
+                        isQuoteSuccess = true; // Mark quote as successful
+                        break; // Exit the loop and proceed
+                    }
+                } catch (error) {
+                    console.error("Error sending quote, retrying...", error);
+                    await new Promise((resolve) => setTimeout(resolve, 1000)); // Retry after 1 second
+                }
+            }
+
+            // Now, delete the customer
+            let isCustomerDeleted = false;
+
+            while (!isCustomerDeleted) {
+                try {
+                    const customerResponse = await axios.delete(
+                        `http://localhost:8888/.netlify/functions/server/customers/${customer.id}`
+                    );
+
+                    console.log(customerResponse.status);
+
+                    if (customerResponse.status === 200 || customerResponse.status === 404) {
+                        isCustomerDeleted = true; // Mark deletion as successful
+
+                        // Remove the customer from local storage after deletion
+                        localStorage.removeItem(`customer_${customer.id}`);
+
+                        setShowQuoteModal(false);
+                        fetchCustomers();
+
+                        // Optionally reload the page on success
+                        window.location.reload();
+                    } else {
+                        console.error('Unexpected status code:', customerResponse.status);
+                    }
+                } catch (error) {
+                    if (error.response.status === 404) {
+                        isCustomerDeleted = true; // Mark deletion as successful
+
+                        // Remove the customer from local storage after deletion
+                        localStorage.removeItem(`customer_${customer.id}`);
+
+                        setShowQuoteModal(false);
+                        fetchCustomers();
+
+                        // Optionally reload the page on success
+                        window.location.reload();
+                    } else {
+                        console.error('Unexpected status code:', error.response.status);
+                    }
+                    // Handle only errors other than 404 or network errors
+                    if (error.response && error.response.status !== 404) {
                         console.error("Error deleting customer, retrying...", error);
-                        // Optional: Add a small delay before retrying, e.g., 1 second
-                        await new Promise((resolve) => setTimeout(resolve, 1000));
+                        await new Promise((resolve) => setTimeout(resolve, 1000)); // Retry after 1 second
                     }
                 }
             }
@@ -453,21 +521,28 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
     const handleEndSession = async () => {
         setLoading(true); // Start loading
         try {
+            if (localStorage.getItem(`customer_${customer.id}`)) {
+                return; // Exit the function early
+            }
             // Get the current time
-            const currentTime = new Date().toISOString();
+            const currentTime = customer.end_time && new Date(customer.end_time).getTime() <= new Date().getTime()
+                ? new Date(customer.end_time).toISOString()
+                : new Date().toISOString();
 
             // Calculate the time spent since the last_time_check or start_time
             const lastTimeCheck = new Date(customer.last_time_check || customer.start_time).getTime();
-            const currentTimeMillis = new Date().getTime();
+            const currentTimeMillis = customer.end_time && new Date(customer.end_time).getTime() <= new Date().getTime()
+                ? new Date(customer.end_time).getTime()
+                : new Date().getTime();
             const timeSpentMilliseconds = currentTimeMillis - lastTimeCheck;
-
+            const timeSpentMillisecondsLog = currentTimeMillis - new Date(customer.start_time).getTime();
             // Convert time spent to hours and minutes
             const timeSpentHours = Math.floor(timeSpentMilliseconds / (1000 * 60 * 60));
             const timeSpentMinutes = Math.floor((timeSpentMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
 
             // Calculate the cost for the time spent
             const timeCost = (timeSpentMilliseconds / (1000 * 60 * 60)) * parseFloat(customer.price_per_hour);
-
+            const timeCostLog = (timeSpentMillisecondsLog / (1000 * 60 * 60)) * parseFloat(customer.price_per_hour);
             // Create a log entry for the session end
             const logEntry = {
                 old_mode: customer.current_machine.multi_single, // Current mode before session ends
@@ -477,7 +552,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
                 old_start_time: customer.start_time, // Start time of the session
                 time_spent_hours: timeSpentHours, // Time spent in hours
                 time_spent_minutes: timeSpentMinutes, // Time spent in minutes
-                time_cost: timeCost, // Cost of the time spent
+                time_cost: timeCostLog, // Cost of the time spent
                 timestamp: currentTime, // Timestamp of the session end
             };
 
@@ -495,7 +570,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
 
             // Update the customer on the server using a PUT request
             await axios.put(
-                `https://playstationbackend.netlify.app/.netlify/functions/server/customers/${updatedCustomer.id}`,
+                `http://localhost:8888/.netlify/functions/server/customers/${updatedCustomer.id}`,
                 updatedCustomer
             );
 
@@ -510,6 +585,7 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
                 ...prev,
                 [customer.id]: true, // Set the trigger for this customer
             }));
+            localStorage.setItem(`customer_${updatedCustomer.id}`, true);
 
             // Refresh the customer list to reflect the changes
             fetchCustomers();
@@ -673,10 +749,10 @@ const RoomDetails = ({ customer: initialCustomer, fetchCustomers, updateCustomer
                             <Button variant="secondary" onClick={() => setShowModeModal(true)}>
                                 <FaGamepad className="me-2" /> تغيير الوضع
                             </Button>
-                            <Button variant="info" onClick={refreshTotalCost} disabled={isDisabled}>
+                            <Button variant="info" onClick={refreshTotalCost}>
                                 <FaSyncAlt className="me-2" /> تحديث التكلفة
                             </Button>
-                            <Button variant="warning" onClick={handleEndSession} disabled={isDisabled}>
+                            <Button variant="warning" onClick={handleEndSession}>
                                 <FaStopCircle className="me-2" /> إنهاء الجلسة
                             </Button>
                             <Button variant="success" onClick={handleGenerateQuote}>

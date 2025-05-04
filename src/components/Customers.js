@@ -91,7 +91,7 @@ const Customers = () => {
     const handlePaymentConfirmation = async (quoteDetails, customerId) => {
         try {
             // Step 1: Create a new quote
-            const quoteResponse = await axios.post('https://playstationbackend.netlify.app/.netlify/functions/server/quotes', {
+            const quoteResponse = await axios.post('http://localhost:8888/.netlify/functions/server/quotes', {
                 quote_details: quoteDetails.quote_details,
                 cost: quoteDetails.cost,
                 date: quoteDetails.date,
@@ -102,7 +102,7 @@ const Customers = () => {
                 console.log('Quote created successfully:', quoteResponse.data);
                 console.log(customerId)
                 // Step 2: Delete the customer after payment confirmation
-                const deleteResponse = await axios.delete(`https://playstationbackend.netlify.app/.netlify/functions/server/customers/${customerId}`);
+                const deleteResponse = await axios.delete(`http://localhost:8888/.netlify/functions/server/customers/${customerId}`);
 
                 if (deleteResponse.status === 200) {
                     console.log('Customer deleted successfully:', deleteResponse.data);
@@ -122,7 +122,7 @@ const Customers = () => {
     // Fetch all customers
     const fetchCustomers = async () => {
         try {
-            const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/customers');
+            const response = await axios.get('http://localhost:8888/.netlify/functions/server/customers');
             setCustomers(response.data);
         } catch (error) {
             console.error('Error fetching customers:', error);
@@ -132,7 +132,7 @@ const Customers = () => {
     // Fetch all machines
     const fetchMachines = async () => {
         try {
-            const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/machines');
+            const response = await axios.get('http://localhost:8888/.netlify/functions/server/machines');
             setMachines(response.data);
             initializeTimers(response.data); // Initialize timers after fetching customers
         } catch (error) {
@@ -142,7 +142,7 @@ const Customers = () => {
     // Fetch all food/drinks
     const fetchFoodDrinks = async () => {
         try {
-            const response = await axios.get('https://playstationbackend.netlify.app/.netlify/functions/server/food-drinks');
+            const response = await axios.get('http://localhost:8888/.netlify/functions/server/food-drinks');
             setFoodDrinks(response.data);
         } catch (error) {
             console.error('Error fetching food/drinks:', error);
@@ -212,7 +212,7 @@ const Customers = () => {
     const handleEndSession = async (customerId) => {
         try {
             // Call the backend API to end the session
-            await axios.post(`https://playstationbackend.netlify.app/.netlify/functions/server/customers/${customerId}/end-time`);
+            await axios.post(`http://localhost:8888/.netlify/functions/server/customers/${customerId}/end-time`);
 
             // Refresh the customer list to reflect the changes
             fetchCustomers();
@@ -288,10 +288,10 @@ const Customers = () => {
 
             if (editMode) {
                 // Update customer
-                await axios.put(`https://playstationbackend.netlify.app/.netlify/functions/server/customers/${currentCustomer.id}`, customerData);
+                await axios.put(`http://localhost:8888/.netlify/functions/server/customers/${currentCustomer.id}`, customerData);
             } else {
                 // Add new customer
-                await axios.post('https://playstationbackend.netlify.app/.netlify/functions/server/customers', customerData);
+                await axios.post('http://localhost:8888/.netlify/functions/server/customers', customerData);
             }
 
             setShowModal(false);
@@ -333,7 +333,7 @@ const Customers = () => {
             }
 
             // Update the customer in the backend
-            await axios.put(`https://playstationbackend.netlify.app/.netlify/functions/server/customers/${updatedCustomer.id}`, updatedCustomer);
+            await axios.put(`http://localhost:8888/.netlify/functions/server/customers/${updatedCustomer.id}`, updatedCustomer);
 
             // Reset the form and close the modal
             setCurrentDrinkFood({
@@ -358,7 +358,7 @@ const Customers = () => {
     // Handle delete button click for customer
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`https://playstationbackend.netlify.app/.netlify/functions/server/customers/${id}`);
+            await axios.delete(`http://localhost:8888/.netlify/functions/server/customers/${id}`);
             fetchCustomers(); // Refresh the list
 
             // Remove the trigger for this customer
@@ -390,7 +390,7 @@ const Customers = () => {
             const removedCost = removedItem.price * removedItem.quantity;
 
             // Update the customer in the backend
-            await axios.put(`https://playstationbackend.netlify.app/.netlify/functions/server/customers/${customerId}`, {
+            await axios.put(`http://localhost:8888/.netlify/functions/server/customers/${customerId}`, {
                 ...customer,
                 drinks_foods: updatedDrinksFoods,
                 total_cost: customer.total_cost - removedCost, // Update total_cost
